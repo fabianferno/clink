@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback } from "react";
 import { PrivyProvider, usePrivy as usePrivyHook } from "@privy-io/react-auth";
+import { mendoza } from "@arkiv-network/sdk/chains";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const hasValidPrivyId = PRIVY_APP_ID && PRIVY_APP_ID !== "placeholder" && PRIVY_APP_ID.length >= 10;
@@ -76,6 +77,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         embeddedWallets: {
           createOnLogin: "users-without-wallets",
         },
+        defaultChain: mendoza,
+        supportedChains: [mendoza],
       }}
     >
       <PrivyAuthWrapper>{children}</PrivyAuthWrapper>

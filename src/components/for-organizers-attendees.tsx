@@ -111,7 +111,7 @@ export function ForOrganizersAttendees() {
               ))}
             </ul>
             <Button variant="outline" asChild>
-              <Link href="/#events">Browse events</Link>
+              <Link href="/events">Browse events</Link>
             </Button>
           </motion.div>
         </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers";
+import { useWallets } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
 import { ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -13,10 +14,58 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { ExpirationTime, jsonToPayload } from "@arkiv-network/sdk/utils";
+import { mendoza } from "@arkiv-network/sdk/chains";
 import { Header } from "@/components/header";
 
+const hasPrivy =
+  typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID !== "placeholder" &&
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID.length >= 10;
+
 export default function CreateEventPage() {
+  if (!hasPrivy) {
+    return <CreateEventPageFallback />;
+  }
+  return <CreateEventPageWithPrivy />;
+}
+
+function CreateEventPageFallback() {
+  const { ready, authenticated, login } = useAuth();
+  if (!ready) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="min-h-screen">
+      <Header />
+      <div className="mx-auto max-w-2xl px-4 pt-32">
+        <Card>
+          <CardHeader>
+            <h1 className="font-malinton text-2xl font-bold">Connect to create event</h1>
+            <p className="text-muted-foreground">
+              Add NEXT_PUBLIC_PRIVY_APP_ID to your environment to enable wallet connection.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={login} size="lg" disabled>
+              Connect wallet
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function CreateEventPageWithPrivy() {
   const { ready, authenticated, login, user } = useAuth();
+  const { wallets } = useWallets();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,16 +90,23 @@ export default function CreateEventPage() {
     setError(null);
 
     try {
-      const ethereumProvider = typeof window !== "undefined" ? (window as { ethereum?: unknown }).ethereum : undefined;
-      if (!ethereumProvider) {
-        throw new Error("Please connect your wallet (MetaMask or similar)");
+      const wallet = wallets[0];
+      if (!wallet) {
+        throw new Error("No wallet connected. Please connect your wallet and try again.");
       }
 
-      const walletClient = createArkivWalletClient(ethereumProvider);
+      const provider = await wallet.getEthereumProvider();
+      if (!provider) {
+        throw new Error("Could not get wallet provider. Please try reconnecting your wallet.");
+      }
+
+      await wallet.switchChain(mendoza.id);
+
+      const walletClient = createArkivWalletClient(provider, wallet.address as `0x${string}`);
       const eventTimestamp = Math.floor(new Date(`${form.date}T${form.time}`).getTime() / 1000);
       const expiresIn = ExpirationTime.fromDays(30);
 
-      const walletAddress = user?.wallet?.address ?? (user?.linkedAccounts?.find((a: { type: string }) => a.type === "wallet") as { address: string } | undefined)?.address ?? "";
+      const walletAddress = user?.wallet?.address ?? (user?.linkedAccounts?.find((a: { type: string }) => a.type === "wallet") as { address: string } | undefined)?.address ?? wallet.address;
       const organizerAddress = walletAddress;
       const organizerName = walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Anonymous";
 
@@ -126,7 +182,7 @@ export default function CreateEventPage() {
         className="mx-auto max-w-2xl px-4 pt-32 pb-16"
       >
         <Link
-          href="/"
+          href="/events"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -235,7 +291,7 @@ export default function CreateEventPage() {
               )}
             </Button>
             <Button type="button" variant="outline" asChild>
-              <Link href="/">Cancel</Link>
+              <Link href="/events">Cancel</Link>
             </Button>
           </div>
         </form>

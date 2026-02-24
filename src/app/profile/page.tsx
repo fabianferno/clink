@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
         <div className="mt-8">
           <Button variant="outline" asChild>
-            <Link href="/">Browse events</Link>
+            <Link href="/events">Browse events</Link>
           </Button>
         </div>
       </motion.div>

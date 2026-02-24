@@ -28,7 +28,7 @@ export function Header() {
 
         <div className="hidden items-center gap-8 md:flex">
           <Link
-            href="/"
+            href="/events"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Events
@@ -80,7 +80,7 @@ export function Header() {
         >
           <div className="flex flex-col gap-2 px-4 py-4">
             <Link
-              href="/"
+              href="/events"
               className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => setMobileMenuOpen(false)}
             >

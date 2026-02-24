@@ -60,7 +60,7 @@ export function Hero() {
             </Link>
           </Button>
           <Button variant="outline" size="lg" asChild>
-            <Link href="/#events">Browse events</Link>
+            <Link href="/events">Browse events</Link>
           </Button>
         </motion.div>
 

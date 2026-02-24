@@ -94,7 +94,7 @@ export function HowItWorks() {
           className="mt-16 flex justify-center"
         >
           <Button size="lg" asChild>
-            <Link href="/#events">Browse events</Link>
+            <Link href="/events">Browse events</Link>
           </Button>
         </motion.div>
       </div>

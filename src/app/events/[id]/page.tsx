@@ -109,7 +109,7 @@ export default function EventDetailPage() {
         <div className="mx-auto max-w-2xl px-4 pt-32 text-center">
           <h1 className="font-malinton mb-4 text-2xl font-bold">Event not found</h1>
           <Button asChild>
-            <Link href="/">Back to events</Link>
+            <Link href="/events">Back to events</Link>
           </Button>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function EventDetailPage() {
         className="mx-auto max-w-4xl px-4 pt-24 pb-16"
       >
         <Link
-          href="/"
+          href="/events"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

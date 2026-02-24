@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { publicClient } from "@/lib/arkiv";
 import { eq, gt } from "@arkiv-network/sdk/query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface EventData {
   entityKey: string;
@@ -27,61 +27,79 @@ export function EventsFeed() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const now = Math.floor(Date.now() / 1000);
-        const query = publicClient.buildQuery();
-        const result = await query
-          .where(eq("type", "event"))
-          .where(gt("event_timestamp", now))
-          .withPayload(true)
-          .withAttributes(true)
-          .limit(20)
-          .fetch();
+  const fetchEvents = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const now = Math.floor(Date.now() / 1000);
+      const query = publicClient.buildQuery();
+      const result = await query
+        .where(eq("type", "event"))
+        .where(gt("event_timestamp", now))
+        .withPayload(true)
+        .withAttributes(true)
+        .limit(20)
+        .fetch();
 
-        const eventList: EventData[] = result.entities.map((entity) => {
-          const payload = entity.payload ? entity.toJson() : {};
-          const attrs = entity.attributes || [];
-          const eventTimestamp = attrs.find((a) => a.key === "event_timestamp")?.value as number;
-          return {
-            entityKey: entity.key,
-            title: (payload?.title as string) || "Untitled Event",
-            description: (payload?.description as string) || "",
-            location: (payload?.location as string) || "",
-            imageUrl: payload?.imageUrl as string | undefined,
-            organizerName: (payload?.organizerName as string) || "Anonymous",
-            capacity: (payload?.capacity as number) || 0,
-            currentRsvps: (payload?.currentRsvps as number) || 0,
-            eventTimestamp: eventTimestamp || 0,
-            community: attrs.find((a) => a.key === "community")?.value as string | undefined,
-          };
-        });
+      const eventList: EventData[] = result.entities.map((entity) => {
+        const payload = entity.payload ? entity.toJson() : {};
+        const attrs = entity.attributes || [];
+        const eventTimestamp = attrs.find((a) => a.key === "event_timestamp")?.value as number;
+        return {
+          entityKey: entity.key,
+          title: (payload?.title as string) || "Untitled Event",
+          description: (payload?.description as string) || "",
+          location: (payload?.location as string) || "",
+          imageUrl: payload?.imageUrl as string | undefined,
+          organizerName: (payload?.organizerName as string) || "Anonymous",
+          capacity: (payload?.capacity as number) || 0,
+          currentRsvps: (payload?.currentRsvps as number) || 0,
+          eventTimestamp: eventTimestamp || 0,
+          community: attrs.find((a) => a.key === "community")?.value as string | undefined,
+        };
+      });
 
-        setEvents(eventList);
-      } catch (err) {
-        console.error("Failed to fetch events:", err);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
+      setEvents(eventList);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+      setEvents([]);
+    } finally {
+      if (showLoading) setLoading(false);
     }
-
-    fetchEvents();
   }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  // Refetch when user returns to tab (e.g. after creating event or switching back)
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchEvents(false);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [fetchEvents]);
 
   if (loading) {
     return (
       <section id="events" className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-malinton mb-12 text-center text-3xl font-bold text-foreground"
-          >
-            Upcoming events
-          </motion.h2>
+          <div className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="font-malinton text-center text-3xl font-bold text-foreground sm:text-left"
+            >
+              Upcoming events
+            </motion.h2>
+            <Button variant="outline" size="sm" disabled className="gap-2 shrink-0">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Refresh
+            </Button>
+          </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="animate-pulse">
@@ -101,14 +119,26 @@ export function EventsFeed() {
   return (
     <section id="events" className="px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="font-malinton mb-12 text-center text-3xl font-bold text-foreground"
-        >
-          Upcoming events
-        </motion.h2>
+        <div className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-malinton text-center text-3xl font-bold text-foreground sm:text-left"
+          >
+            Upcoming events
+          </motion.h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchEvents()}
+            disabled={loading}
+            className="gap-2 shrink-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
 
         {events.length === 0 ? (
           <motion.div
@@ -117,9 +147,18 @@ export function EventsFeed() {
             className="rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/20 px-8 py-16 text-center"
           >
             <p className="mb-4 text-muted-foreground">No upcoming events yet.</p>
-            <Button asChild>
-              <Link href="/events/create">Create the first event</Link>
-            </Button>
+            <p className="mb-6 text-sm text-muted-foreground/80">
+              Only events with a future date/time are shown. If you just created an event, try refreshing or check that the event date is in the future.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button variant="outline" asChild>
+                <Link href="/events/create">Create the first event</Link>
+              </Button>
+              <Button onClick={() => fetchEvents()} variant="secondary" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
           </motion.div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
