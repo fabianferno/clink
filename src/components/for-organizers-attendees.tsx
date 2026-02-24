@@ -1,0 +1,121 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Megaphone, Users, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+const organizerFeatures = [
+  "Create events with full control — title, description, date, location, capacity",
+  "View RSVPs and attendee list in real time",
+  "Your events live on Arkiv — you own them, not the platform",
+  "Trust high Clink Score attendees — fewer no-shows",
+];
+
+const attendeeFeatures = [
+  "Browse events without connecting a wallet",
+  "RSVP with your wallet — your attendance is recorded on-chain",
+  "Check in at events to build your Clink Score",
+  "Your reputation travels with you across all events",
+];
+
+export function ForOrganizersAttendees() {
+  return (
+    <section className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8">
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-3xl" />
+      </div>
+
+      <div className="mx-auto max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-16 text-center"
+        >
+          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-emerald-500">
+            Built for everyone
+          </p>
+          <h2 className="font-malinton mb-6 text-4xl font-bold text-foreground sm:text-5xl">
+            Organizers & attendees
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            Whether you're hosting an event or showing up — Clink works for you.
+          </p>
+        </motion.div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl border border-white/5 bg-card/50 p-8 backdrop-blur"
+          >
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
+                <Megaphone className="h-6 w-6 text-emerald-500" />
+              </div>
+              <div>
+                <h3 className="font-malinton text-xl font-semibold text-foreground">
+                  For organizers
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Host events that you own
+                </p>
+              </div>
+            </div>
+            <ul className="mb-8 space-y-4">
+              {organizerFeatures.map((feature, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 text-sm text-muted-foreground"
+                >
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <Button asChild>
+              <Link href="/events/create">Create an event</Link>
+            </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl border border-white/5 bg-card/50 p-8 backdrop-blur"
+          >
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
+                <Users className="h-6 w-6 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-malinton text-xl font-semibold text-foreground">
+                  For attendees
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Show up, get rewarded
+                </p>
+              </div>
+            </div>
+            <ul className="mb-8 space-y-4">
+              {attendeeFeatures.map((feature, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 text-sm text-muted-foreground"
+                >
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <Button variant="outline" asChild>
+              <Link href="/#events">Browse events</Link>
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
