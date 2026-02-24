@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { PrivyProvider, usePrivy as usePrivyHook } from "@privy-io/react-auth";
 import { mendoza } from "@arkiv-network/sdk/chains";
+import { StyleSheetManager } from "styled-components";
+import isPropValid from "@emotion/is-prop-valid";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const hasValidPrivyId = PRIVY_APP_ID && PRIVY_APP_ID !== "placeholder" && PRIVY_APP_ID.length >= 10;
@@ -65,23 +67,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const shouldForwardProp = (propName: string, target: unknown) => {
+    if (typeof target === "string") {
+      return isPropValid(propName);
+    }
+    return true;
+  };
+
   return (
-    <PrivyProvider
-      appId={PRIVY_APP_ID!}
-      config={{
-        loginMethods: ["wallet", "email"],
-        appearance: {
-          theme: "dark",
-          accentColor: "#22c55e",
-        },
-        embeddedWallets: {
-          createOnLogin: "users-without-wallets",
-        },
-        defaultChain: mendoza,
-        supportedChains: [mendoza],
-      }}
-    >
-      <PrivyAuthWrapper>{children}</PrivyAuthWrapper>
-    </PrivyProvider>
+    <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+      <PrivyProvider
+        appId={PRIVY_APP_ID!}
+        config={{
+          loginMethods: ["wallet", "email"],
+          appearance: {
+            theme: "dark",
+            accentColor: "#22c55e",
+          },
+          embeddedWallets: {
+            createOnLogin: "users-without-wallets",
+          },
+          defaultChain: mendoza,
+          supportedChains: [mendoza],
+        }}
+      >
+        <PrivyAuthWrapper>{children}</PrivyAuthWrapper>
+      </PrivyProvider>
+    </StyleSheetManager>
   );
 }

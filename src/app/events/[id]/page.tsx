@@ -47,13 +47,23 @@ export default function EventDetailPage() {
   const entityKey = params.id as string;
 
   useEffect(() => {
-    async function fetchEvent() {
+    let cancelled = false;
+    const maxRetries = 4;
+    const retryDelayMs = 2000;
+
+    async function fetchEvent(retryCount = 0) {
       if (!entityKey) return;
       try {
         const hexKey = entityKey.startsWith("0x") ? entityKey : `0x${entityKey}`;
         const entity = await publicClient.getEntity(hexKey as `0x${string}`);
+        if (cancelled) return;
         if (!entity) {
+          if (retryCount < maxRetries) {
+            setTimeout(() => fetchEvent(retryCount + 1), retryDelayMs);
+            return;
+          }
           setEvent(null);
+          setLoading(false);
           return;
         }
         const payload = entity.payload ? entity.toJson() : {};
@@ -72,13 +82,21 @@ export default function EventDetailPage() {
           community: attrs.find((a) => a.key === "community")?.value as string | undefined,
           status: attrs.find((a) => a.key === "status")?.value as string | undefined,
         });
+        setLoading(false);
       } catch {
+        if (cancelled) return;
+        if (retryCount < maxRetries) {
+          setTimeout(() => fetchEvent(retryCount + 1), retryDelayMs);
+          return;
+        }
         setEvent(null);
-      } finally {
         setLoading(false);
       }
     }
     fetchEvent();
+    return () => {
+      cancelled = true;
+    };
   }, [entityKey]);
 
   const handleRsvp = async () => {
