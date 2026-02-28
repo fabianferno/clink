@@ -48,7 +48,8 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 1rem;
+  /* More rounded corners for cards/buttons */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -83,43 +84,58 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.05 0 0);
+  /* Pure Black / Very Dark */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.12 0 0);
+  /* Slightly lighter black for cards */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.12 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+
+  /* Primary: Neon Pink like the reference */
+  --primary: oklch(0.7 0.25 330);
+  --primary-foreground: oklch(0.145 0 0);
+
+  /* Secondary: Sand / Beige */
+  --secondary: oklch(0.85 0.05 80);
+  --secondary-foreground: oklch(0.145 0 0);
+
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+
+  --accent: oklch(0.7 0.25 330);
+  /* Pink as accent too */
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+
+  --destructive: oklch(0.6 0.25 25);
+  --border: oklch(1 0 0 / 12%);
+  /* Slightly more visible borders */
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.7 0.25 330);
+  /* Pink ring */
+
+  --chart-1: oklch(0.7 0.25 330);
+  --chart-2: oklch(0.85 0.05 80);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+
+  --sidebar: oklch(0.12 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.7 0.25 330);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.2 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.7 0.25 330);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     "An event platform that solves the no-show problem and rewards people who actually show up — built on Arkiv.",
 };
 
+import { MobileNav } from "@/components/mobile-nav";
+import { PageTransition } from "@/components/page-transition";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,9 +48,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${malinton.variable} font-sans antialiased`}
+        className={`${inter.variable} ${malinton.variable} font-sans antialiased pb-20 md:pb-0 min-h-screen flex flex-col`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <PageTransition>
+            {children}
+          </PageTransition>
+          <MobileNav />
+        </Providers>
       </body>
     </html>
   );

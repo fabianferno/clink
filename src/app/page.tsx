@@ -1,19 +1,11 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { WhyClink } from "@/components/why-clink";
-import { HowItWorks } from "@/components/how-it-works";
-import { ForOrganizersAttendees } from "@/components/for-organizers-attendees";
-import { PoweredByArkiv } from "@/components/powered-by-arkiv";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-black flex flex-col">
       <Header />
       <Hero />
-      <WhyClink />
-      <HowItWorks />
-      <ForOrganizersAttendees />
-      <PoweredByArkiv />
     </main>
   );
 }

@@ -17,6 +17,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PatternGraphic } from "@/components/ui/pattern-graphic";
+import { cn } from "@/lib/utils";
 import { publicClient } from "@/lib/arkiv";
 import { eq } from "@arkiv-network/sdk/query";
 import { Header } from "@/components/header";
@@ -136,119 +138,132 @@ export default function EventDetailPage() {
 
   const isPast = event.eventTimestamp < Math.floor(Date.now() / 1000);
 
-  return (
-    <div className="min-h-screen">
-      <Header />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-4xl px-4 pt-24 pb-16"
-      >
-        <Link
-          href="/events"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to events
-        </Link>
+  const dateObj = new Date(event.eventTimestamp * 1000);
+  const dayStr = dateObj.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" }).replace("/", ".");
+  const yearStr = dateObj.getFullYear().toString();
+  const timeStr = dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="aspect-video overflow-hidden rounded-2xl bg-muted">
+  return (
+    <div className="min-h-screen bg-black overflow-hidden flex flex-col">
+      <Header />
+
+      {/* Background abstract decoration */}
+      <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-primary/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-12 flex flex-col"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-white text-2xl font-bold flex items-center gap-2">
+            Ticket <span className="text-primary">✦</span>
+          </h1>
+          <Link
+            href="/events"
+            className="text-white hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full border border-white/20"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </Link>
+        </div>
+
+        {/* The Ticket Card */}
+        <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col relative border border-white/5 shadow-2xl overflow-hidden flex-1 min-h-[600px]">
+
+          {/* Top Graphic Area */}
+          <div className="p-4 w-full aspect-[4/3]">
+            <div className="w-full h-full rounded-[1.5rem] overflow-hidden relative bg-muted">
               {event.imageUrl ? (
                 <img
                   src={event.imageUrl}
                   alt={event.title}
-                  className="h-full w-full object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-950/50 to-amber-950/30">
-                  <Calendar className="h-24 w-24 text-muted-foreground/30" />
-                </div>
+                <PatternGraphic seed={event.entityKey} variant="pink" />
               )}
-            </div>
 
-            <div>
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <h1 className="font-malinton text-3xl font-bold">{event.title}</h1>
-                {event.community && (
-                  <Badge variant="secondary">{event.community}</Badge>
-                )}
-                {isPast && <Badge variant="outline">Past</Badge>}
+              {/* Floating Date on Graphic */}
+              <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                <span className="text-white font-bold text-lg">{dayStr} <span className="font-normal opacity-80">{yearStr}</span></span>
               </div>
-              <p className="text-muted-foreground whitespace-pre-wrap">{event.description || "No description."}</p>
             </div>
-
-            <Card>
-              <CardHeader>
-                <h2 className="font-semibold">Details</h2>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <span>
-                    {new Date(event.eventTimestamp * 1000).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <span>{event.location || "TBA"}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                  <span>
-                    {event.currentRsvps} / {event.capacity || "∞"} RSVPs
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <h2 className="font-semibold">Organizer</h2>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
-                    <User className="h-5 w-5 text-emerald-500" />
-                  </div>
-                  <span className="font-medium">{event.organizerName}</span>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Ticket Info Area */}
+          <div className="px-8 pb-4">
+            <h2 className="font-malinton text-4xl font-bold text-white leading-tight mb-2">
+              {event.title}
+            </h2>
+            <p className="text-white/60 text-sm mb-8 line-clamp-2">
+              {event.community ? `${event.community} • ` : ""}{event.location || "Location TBA"}
+            </p>
 
-            <div className="space-y-3">
-              {!isPast && (
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={handleRsvp}
-                  disabled={rsvpLoading}
-                >
-                  {authenticated ? (rsvpLoading ? "RSVPing..." : "RSVP") : "Connect to RSVP"}
-                </Button>
-              )}
-              <Button variant="outline" size="lg" className="w-full" asChild>
+            {/* Grid Stats */}
+            <div className="grid grid-cols-2 gap-y-8 gap-x-4 mb-8">
+              <div>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Date</p>
+                <p className="text-white font-bold text-lg">{dayStr} {yearStr}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Time</p>
+                <p className="text-white font-bold text-lg">{timeStr}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">RSVPs</p>
+                <p className="text-white font-bold text-lg">{event.currentRsvps} <span className="text-sm font-normal text-white/50">/ {event.capacity || "∞"}</span></p>
+              </div>
+              <div>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Organizer</p>
+                <p className="text-white font-bold text-lg truncate">{event.organizerName}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket Dotted Separator */}
+          <div className="w-full relative py-2">
+            <div className="absolute w-8 h-8 rounded-full bg-black -left-4 top-1/2 -translate-y-1/2 z-10" />
+            <div className="w-full border-t-[3px] border-dashed border-white/10" />
+            <div className="absolute w-8 h-8 rounded-full bg-black -right-4 top-1/2 -translate-y-1/2 z-10" />
+          </div>
+
+          {/* Bottom Barcode / Action Area */}
+          <div className="p-8 mt-auto flex flex-col gap-4">
+            {!isPast && (
+              <Button
+                size="lg"
+                className="w-full h-14 text-lg bg-white text-black hover:bg-white/90 rounded-full font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                onClick={handleRsvp}
+                disabled={rsvpLoading}
+              >
+                {authenticated ? (rsvpLoading ? "RSVPing..." : "RSVP Now") : "Connect to RSVP"}
+              </Button>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10" asChild>
                 <Link href={`/events/${entityKey}/checkin`}>
-                  <QrCode className="mr-2 h-4 w-4" />
                   Check-in
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="w-full" asChild>
+              <Button variant="outline" className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10" asChild>
                 <Link href={`/events/${entityKey}/attendees`}>
-                  <CheckCircle className="mr-2 h-4 w-4" />
                   Attendees
                 </Link>
               </Button>
+            </div>
+
+            {/* Visual Barcode */}
+            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-white/30">
+              <span className="font-mono text-xs tracking-widest">{entityKey.slice(0, 12)}...</span>
+              <svg width="100" height="24" viewBox="0 0 100 24" fill="currentColor">
+                {/* Random lines mimicking a barcode */}
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <rect key={i} x={i * 3 + (Math.random() * 2)} y="0" width={Math.random() > 0.5 ? 2 : 1} height="24" />
+                ))}
+              </svg>
             </div>
           </div>
         </div>

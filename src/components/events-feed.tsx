@@ -6,6 +6,8 @@ import { Calendar, MapPin, Users, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PatternGraphic } from "@/components/ui/pattern-graphic";
+import { cn } from "@/lib/utils";
 import { publicClient } from "@/lib/arkiv";
 import { eq, gt } from "@arkiv-network/sdk/query";
 import { useEffect, useState, useCallback } from "react";
@@ -162,77 +164,95 @@ export function EventsFeed() {
           </motion.div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event, i) => (
-              <motion.div
-                key={event.entityKey}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Card className="group overflow-hidden transition-all hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
-                  <Link href={`/events/${event.entityKey}`}>
-                    <div className="aspect-video overflow-hidden bg-muted">
-                      {event.imageUrl ? (
-                        <img
-                          src={event.imageUrl}
-                          alt={event.title}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-950/50 to-amber-950/30">
-                          <Calendar className="h-16 w-16 text-muted-foreground/30" />
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-emerald-400">
-                          {event.title}
-                        </h3>
+            {events.map((event, i) => {
+              const dateObj = new Date(event.eventTimestamp * 1000);
+              const dayStr = dateObj.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" }).replace("/", ".");
+              const weekdayStr = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+
+              return (
+                <motion.div
+                  key={event.entityKey}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="h-full"
+                >
+                  <Card className="group h-full overflow-hidden transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_0_30px_-10px_rgba(255,82,162,0.3)] bg-card border-white/10 flex flex-col p-2 rounded-[1.5rem]">
+                    <Link href={`/events/${event.entityKey}`} className="flex flex-col h-full">
+                      {/* Top Graphic Area */}
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[1rem] bg-muted mb-4">
+                        {event.imageUrl ? (
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+                            <PatternGraphic
+                              seed={event.entityKey}
+                              variant={i % 2 === 0 ? "pink" : "beige"}
+                            />
+                            {/* Overlay large date on the pattern */}
+                            <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                              <div className="flex flex-col drop-shadow-md">
+                                <span className={cn("text-4xl font-bold tracking-tighter leading-none", i % 2 === 0 ? "text-white" : "text-black")}>
+                                  {dayStr}
+                                </span>
+                                <span className={cn("text-xl font-medium", i % 2 === 0 ? "text-white/80" : "text-black/80")}>
+                                  {weekdayStr}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Always show community badge if present, floating */}
                         {event.community && (
-                          <Badge variant="secondary" className="shrink-0">
-                            {event.community}
-                          </Badge>
+                          <div className="absolute bottom-3 left-3">
+                            <Badge variant="secondary" className="bg-black/50 backdrop-blur text-white border-white/10">
+                              {event.community}
+                            </Badge>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {event.description || "No description"}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 shrink-0" />
-                        <span className="line-clamp-1">{event.location || "TBA"}</span>
+
+                      {/* Content Area */}
+                      <div className="flex flex-col flex-1 px-2 pb-2">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="font-malinton text-xl font-bold text-foreground line-clamp-2 leading-tight">
+                            {event.title}
+                          </h3>
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M7 17l9.2-9.2M17 17V7H7" />
+                            </svg>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground line-clamp-1 mb-4">
+                          {event.description || "No description"}
+                        </p>
+
+                        <div className="mt-auto space-y-2 pt-4 border-t border-white/5">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              <span className="line-clamp-1 max-w-[120px]">{event.location || "TBA"}</span>
+                            </span>
+                            <span className="flex items-center gap-1 uppercase">
+                              <Users className="h-3.5 w-3.5" />
+                              {event.currentRsvps}/{event.capacity || "∞"}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 shrink-0" />
-                        <span>
-                          {new Date(event.eventTimestamp * 1000).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4 shrink-0" />
-                        <span>
-                          {event.currentRsvps} / {event.capacity || "∞"} RSVPs
-                        </span>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button variant="ghost" size="sm" className="w-full group-hover:bg-emerald-500/10">
-                        View event →
-                      </Button>
-                    </CardFooter>
-                  </Link>
-                </Card>
-              </motion.div>
-            ))}
+                    </Link>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
