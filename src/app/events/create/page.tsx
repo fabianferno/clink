@@ -141,10 +141,10 @@ function CreateEventPageWithPrivy() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-black">
         <Header />
         <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-white/50 animate-pulse font-bold tracking-widest uppercase text-sm">Preparing Studio...</p>
         </div>
       </div>
     );
@@ -152,146 +152,159 @@ function CreateEventPageWithPrivy() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-black flex flex-col">
         <Header />
-        <div className="mx-auto max-w-2xl px-4 pt-32">
-          <Card>
-            <CardHeader>
-              <h1 className="font-malinton text-2xl font-bold">Connect to create event</h1>
-              <p className="text-muted-foreground">
-                Connect your wallet to create an event on Clink.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={login} size="lg">
-                Connect wallet
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-lg w-full text-center">
+          <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
+            <Calendar className="w-10 h-10 text-white/40" />
+          </div>
+          <h1 className="font-malinton text-4xl font-black text-white mb-4">CONNECT IDENTITY</h1>
+          <p className="text-white/60 mb-8 font-medium">
+            Connect your wallet to host an event on Clink and build your community reputation.
+          </p>
+          <Button onClick={login} size="lg" className="w-full h-14 bg-primary text-black font-bold hover:bg-primary/90 text-lg">
+            Connect Wallet
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
       <Header />
+
+      {/* Brutalist Abstract Background Art */}
+      <div className="absolute top-20 right-0 w-full max-w-lg h-[600px] bg-secondary/10 blur-[140px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <div className="absolute top-1/2 left-0 w-full max-w-lg h-[400px] bg-primary/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/3 pointer-events-none" />
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-2xl px-4 pt-32 pb-16"
+        className="flex-1 w-full max-w-2xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
       >
         <Link
           href="/events"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          className="mb-8 inline-flex items-center gap-2 text-sm font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors w-fit"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to events
         </Link>
 
-        <h1 className="font-malinton mb-8 text-3xl font-bold">Create event</h1>
+        <h1 className="font-malinton mb-10 text-5xl font-black text-white">HOST EVENT</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {error && (
-            <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-6 py-4 text-sm font-medium text-destructive">
               {error}
             </div>
           )}
 
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  required
-                  placeholder="e.g. Web3 Meetup"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-              </div>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="title" className="text-white/60 font-bold tracking-widest uppercase text-xs">Title <span className="text-primary">*</span></Label>
+              <Input
+                id="title"
+                required
+                placeholder="e.g. Web3 Meetup"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-lg"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="What's this event about?"
-                  rows={4}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                />
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="description" className="text-white/60 font-bold tracking-widest uppercase text-xs">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="What's this event about?"
+                rows={4}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="bg-white/5 border-white/10 text-white rounded-2xl px-6 py-4 focus-visible:ring-primary focus-visible:border-primary transition-all text-base resize-none"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="Venue or virtual link"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                />
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="location" className="text-white/60 font-bold tracking-widest uppercase text-xs">Location <span className="text-primary">*</span></Label>
+              <Input
+                id="location"
+                required
+                placeholder="Venue or virtual link"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-base"
+              />
+            </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Label htmlFor="date" className="text-white/60 font-bold tracking-widest uppercase text-xs">Date <span className="text-primary">*</span></Label>
+                <div className="relative">
                   <Input
                     id="date"
                     type="date"
                     required
                     value={form.date}
                     onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-base block w-full appearance-none [&::-webkit-calendar-picker-indicator]:invert-[1] [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="time">Time</Label>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="time" className="text-white/60 font-bold tracking-widest uppercase text-xs">Time <span className="text-primary">*</span></Label>
+                <div className="relative">
                   <Input
                     id="time"
                     type="time"
                     required
                     value={form.time}
                     onChange={(e) => setForm({ ...form, time: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-base block w-full appearance-none [&::-webkit-calendar-picker-indicator]:invert-[1] [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity (optional)</Label>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Label htmlFor="capacity" className="text-white/60 font-bold tracking-widest uppercase text-xs">Capacity</Label>
                 <Input
                   id="capacity"
                   type="number"
                   min="1"
-                  placeholder="Leave empty for unlimited"
+                  placeholder="Unlimited"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-base"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="community">Community</Label>
+              <div className="space-y-3">
+                <Label htmlFor="community" className="text-white/60 font-bold tracking-widest uppercase text-xs">Community Tag</Label>
                 <Input
                   id="community"
                   placeholder="e.g. eth-chennai"
                   value={form.community}
                   onChange={(e) => setForm({ ...form, community: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white h-14 rounded-2xl px-6 focus-visible:ring-primary focus-visible:border-primary transition-all text-base"
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <div className="flex gap-4">
-            <Button type="submit" disabled={loading} size="lg" className="gap-2">
+          <div className="pt-6">
+            <Button
+              type="submit"
+              disabled={loading}
+              size="lg"
+              className="w-full h-16 text-xl bg-primary text-black hover:bg-primary/90 rounded-full font-black tracking-wide shadow-[0_0_30px_rgba(255,82,162,0.3)] hover:shadow-[0_0_40px_rgba(255,82,162,0.5)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
               {loading ? (
-                "Creating..."
+                <span className="animate-pulse">Creating Event...</span>
               ) : (
-                <>
-                  <Calendar className="h-4 w-4" />
-                  Create event
-                </>
+                "LAUNCH EVENT"
               )}
-            </Button>
-            <Button type="button" variant="outline" asChild>
-              <Link href="/events">Cancel</Link>
             </Button>
           </div>
         </form>
