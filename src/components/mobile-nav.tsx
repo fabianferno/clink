@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, PlusCircle, User } from "lucide-react";
+import { Home, Calendar, PlusCircle, User, Users } from "lucide-react";
 import { useAuth } from "@/components/providers";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -31,6 +31,12 @@ export function MobileNav() {
             icon: PlusCircle,
         },
         {
+            name: "Friends",
+            href: "/friends",
+            icon: Users,
+            requiresAuth: true,
+        },
+        {
             name: "Profile",
             href: "/profile",
             icon: User,
@@ -46,7 +52,7 @@ export function MobileNav() {
             className="fixed bottom-6 left-4 right-4 z-50 md:hidden flex justify-center pointer-events-none pb-safe"
         >
             <div className="bg-[#141414]/90 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.8)] px-2 py-1 pointer-events-auto w-full max-w-[400px]">
-                <div className="grid grid-cols-4 items-center h-[64px]">
+                <div className="grid grid-cols-5 items-center h-[64px]">
                     {navItems.map((item) => {
                         // Fix active logic: exact match for root and /events, startsWith for others like profile subpages if needed
                         const isActive =

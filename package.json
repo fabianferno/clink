@@ -12,6 +12,8 @@
     "@arkiv-network/sdk": "^0.4.4",
     "@emotion/is-prop-valid": "^1.4.0",
     "@privy-io/react-auth": "^2.13.1",
+    "@xyflow/react": "^12.10.1",
+    "@yudiel/react-qr-scanner": "^2.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.15.0",
@@ -20,6 +22,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-qr-code": "^2.0.18",
     "styled-components": "^6.3.11",
     "tailwind-merge": "^2.6.0"
   },
