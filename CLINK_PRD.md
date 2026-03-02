@@ -287,6 +287,11 @@ ExpiresIn: ExpirationTime.fromDays(365)                    // long-lived
 3. Click "Clink" on someone → creates ClinkConnection entity with `status: "pending"`.
 4. Other person sees pending clink on their profile → accepts → entity updated to `status: "confirmed"`.
 
+### Other features
+- Adding Friends
+- Incognito attendance
+- Social Graph
+
 ---
 
 ## Arkiv Query Cheat Sheet

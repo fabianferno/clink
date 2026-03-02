@@ -3,12 +3,48 @@
 import Link from "next/link";
 import { useAuth } from "@/components/providers";
 import { motion } from "framer-motion";
-import { Menu, Sparkles, X } from "lucide-react";
-import { useState } from "react";
+import { Sparkles, Wallet } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { publicClient } from "@/lib/arkiv";
+import { formatEther } from "@arkiv-network/sdk";
+
+function WalletBalance({ address }: { address: string }) {
+  const [balance, setBalance] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    publicClient
+      .getBalance({ address: address as `0x${string}` })
+      .then((b) => {
+        if (!cancelled) setBalance(formatEther(b));
+      })
+      .catch(() => {
+        if (!cancelled) setBalance(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
+
+  if (balance === null) return null;
+  const display = parseFloat(balance) < 0.0001 ? "<0.0001" : parseFloat(balance).toFixed(4);
+  return (
+    <span className="flex items-center gap-1.5 text-sm font-medium text-white/70 tabular-nums">
+      <Wallet className="h-4 w-4 text-white/50" />
+      {display} ETH
+    </span>
+  );
+}
 
 export function Header() {
-  const { ready, authenticated, login, logout } = useAuth();
+  const { ready, authenticated, login, logout, user } = useAuth();
+  const walletAddress =
+    user?.wallet?.address ??
+    (user?.linkedAccounts?.find((a: { type: string }) => a.type === "wallet") as
+      | { address: string }
+      | undefined)?.address ??
+    "";
 
   return (
     <motion.header
@@ -55,6 +91,9 @@ export function Header() {
           )}
           {ready && (
             <>
+              {authenticated && walletAddress && (
+                <WalletBalance address={walletAddress} />
+              )}
               {authenticated ? (
                 <Button variant="outline" size="sm" onClick={logout} className="border-white/20 hover:bg-white/10 font-bold">
                   Disconnect
@@ -69,7 +108,10 @@ export function Header() {
         </div>
 
         {/* Mobile Navigation (Minimal) */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden flex items-center gap-2">
+          {authenticated && walletAddress && (
+            <WalletBalance address={walletAddress} />
+          )}
           {ready && !authenticated && (
             <Button size="sm" onClick={login} className="bg-white text-black hover:bg-white/90 font-bold text-xs h-8 px-3">
               Connect
