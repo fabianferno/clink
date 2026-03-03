@@ -271,22 +271,31 @@ export default function AttendeesPage() {
         </Link>
 
         <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden">
-          <div className="p-6 border-b border-white/10">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <h1 className="font-malinton text-2xl font-bold flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               Checked-in Attendees
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {loading
-                ? "Loading..."
-                : `${attendees.length} ${attendees.length === 1 ? "person" : "people"} checked in`}
+            <p className="text-muted-foreground text-sm">
+              {!loading && `${attendees.length} ${attendees.length === 1 ? "person" : "people"} checked in`}
             </p>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ul className="divide-y divide-white/5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <li key={i} className="flex items-center justify-between gap-4 px-6 py-4 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/10 shrink-0" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-white/10 rounded" />
+                      <div className="h-3 w-16 bg-white/10 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-8 w-16 bg-white/10 rounded" />
+                </li>
+              ))}
+            </ul>
           ) : attendees.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
               <Users className="mb-4 h-12 w-12 text-muted-foreground/30" />

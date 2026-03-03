@@ -207,8 +207,8 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
         {status === "loading"
           ? "RSVPing..."
           : authenticated
-          ? "RSVP Now"
-          : "Connect to RSVP"}
+            ? "RSVP Now"
+            : "Connect to RSVP"}
       </Button>
     </div>
   );
@@ -219,6 +219,7 @@ export default function EventDetailPage() {
   useAuth();
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showTicket, setShowTicket] = useState(false);
 
   const entityKey = params.id as string;
 
@@ -278,10 +279,54 @@ export default function EventDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-black overflow-hidden flex flex-col">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-muted-foreground">Loading event...</p>
+        <div className="flex-1 w-full max-w-6xl mx-auto px-4 pt-28 pb-12">
+          <div className="grid md:grid-cols-[1fr_400px] gap-8 relative">
+            <div className="flex flex-col gap-6 w-full animate-pulse">
+              <div className="w-10 h-10 rounded-full bg-white/10" />
+              <div className="w-full aspect-[21/9] rounded-3xl bg-white/10" />
+              <div className="mt-4 space-y-4">
+                <div className="h-12 w-3/4 bg-white/10 rounded-xl" />
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 rounded-full bg-white/10" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-20 bg-white/10 rounded" />
+                    <div className="h-4 w-32 bg-white/10 rounded" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-6 w-40 bg-white/10 rounded" />
+                  <div className="h-4 w-full bg-white/10 rounded" />
+                  <div className="h-4 w-5/6 bg-white/10 rounded" />
+                  <div className="h-4 w-4/6 bg-white/10 rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="sticky top-28 bg-[#141414] rounded-3xl border border-white/5 p-6 space-y-6 animate-pulse">
+                <div className="space-y-6 flex flex-col pt-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/10" />
+                      <div className="space-y-2 flex-1 pt-1">
+                        <div className="h-4 w-1/2 bg-white/10 rounded" />
+                        <div className="h-3 w-1/3 bg-white/10 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-4 border-t border-white/10 space-y-3">
+                  <div className="w-full h-14 bg-white/10 rounded-full" />
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-10 bg-white/10 rounded-full" />
+                    <div className="flex-1 h-10 bg-white/10 rounded-full" />
+                  </div>
+                  <div className="w-full h-12 bg-white/10 rounded-full mt-2" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -321,36 +366,19 @@ export default function EventDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-12 flex flex-col"
+        className="flex-1 w-full max-w-6xl mx-auto px-4 pt-28 pb-12"
       >
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-white text-2xl font-bold flex items-center gap-2">
-            Ticket <span className="text-primary">✦</span>
-          </h1>
-          <Link
-            href="/events"
-            className="text-white hover:text-primary transition-colors flex items-center justify-center w-10 h-10 rounded-full border border-white/20"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <div className="grid md:grid-cols-[1fr_400px] gap-8 relative">
+          {/* Left Column: Details */}
+          <div className="flex flex-col gap-6">
+            <Link
+              href="/events"
+              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-white/10 text-white/50 hover:text-white transition-colors"
             >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </Link>
-        </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </Link>
 
-        {/* The Ticket Card */}
-        <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col relative border border-white/5 shadow-2xl overflow-hidden flex-1 min-h-[600px]">
-          {/* Top Graphic Area */}
-          <div className="p-4 w-full aspect-4/3">
-            <div className="w-full h-full rounded-[1.5rem] overflow-hidden relative bg-muted" style={{ aspectRatio: "4/3" }}>
+            <div className="w-full aspect-[21/9] rounded-3xl overflow-hidden relative bg-[#141414] border border-white/10 shadow-2xl">
               {event.imageUrl ? (
                 <img
                   src={event.imageUrl}
@@ -360,121 +388,207 @@ export default function EventDetailPage() {
               ) : (
                 <PatternGraphic seed={event.entityKey} variant="pink" />
               )}
-              <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-                <span className="text-white font-bold text-lg">
-                  {dayStr}{" "}
-                  <span className="font-normal opacity-80">{yearStr}</span>
-                </span>
-              </div>
             </div>
-          </div>
 
-          {/* Ticket Info Area */}
-          <div className="px-8 pb-4">
-            <h2 className="font-malinton text-4xl font-bold text-white leading-tight mb-2">
-              {event.title}
-            </h2>
-            <p className="text-white/60 text-sm mb-8 line-clamp-2">
-              {event.community ? `${event.community} • ` : ""}
-              {event.location || "Location TBA"}
-            </p>
+            <div className="mt-4">
+              <h1 className="font-malinton text-5xl md:text-6xl font-bold text-white leading-tight mb-4">
+                {event.title}
+              </h1>
 
-            <div className="grid grid-cols-2 gap-y-8 gap-x-4 mb-8">
-              <div>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
-                  Date
-                </p>
-                <p className="text-white font-bold text-lg">
-                  {dayStr} {yearStr}
-                </p>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/50 flex flex-shrink-0" />
+                <div>
+                  <p className="text-white/40 text-xs uppercase tracking-wider">Organized by</p>
+                  <p className="text-white font-medium">{event.organizerName}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
-                  Time
-                </p>
-                <p className="text-white font-bold text-lg">{timeStr}</p>
-              </div>
-              <div>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
-                  RSVPs
-                </p>
-                <p className="text-white font-bold text-lg">
-                  {event.currentRsvps}{" "}
-                  <span className="text-sm font-normal text-white/50">
-                    / {event.capacity || "∞"}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
-                  Organizer
-                </p>
-                <p className="text-white font-bold text-lg truncate">
-                  {event.organizerName}
+
+              <div className="prose prose-invert max-w-none">
+                <h3 className="text-xl font-bold text-white mb-2">About this event</h3>
+                <p className="text-white/70 leading-relaxed whitespace-pre-wrap text-lg">
+                  {event.description || "No description provided."}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Ticket Dotted Separator */}
-          <div className="w-full relative py-2">
-            <div className="absolute w-8 h-8 rounded-full bg-black -left-4 top-1/2 -translate-y-1/2 z-10" />
-            <div className="w-full border-t-[3px] border-dashed border-white/10" />
-            <div className="absolute w-8 h-8 rounded-full bg-black -right-4 top-1/2 -translate-y-1/2 z-10" />
-          </div>
+          {/* Right Column: Sticky Action Card */}
+          <div className="relative">
+            <div className="sticky top-28 bg-[#141414] rounded-3xl border border-white/5 shadow-[0_0_40px_rgba(0,0,0,0.5)] p-6 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold">{dayStr} {yearStr}</p>
+                    <p className="text-white/50 text-sm">{timeStr}</p>
+                  </div>
+                </div>
 
-          {/* Bottom Action Area */}
-          <div className="p-8 mt-auto flex flex-col gap-4">
-            {!isPast &&
-              (hasPrivy ? (
-                <RsvpButton eventKey={entityKey} />
-              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold">{event.location || "Location TBA"}</p>
+                    {event.community && <p className="text-white/50 text-sm">{event.community}</p>}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold">{event.currentRsvps} / {event.capacity || "∞"} RSVPs</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                {!isPast &&
+                  (hasPrivy ? (
+                    <RsvpButton eventKey={entityKey} />
+                  ) : (
+                    <Button
+                      size="lg"
+                      className="w-full h-14 text-lg bg-white text-black hover:bg-white/90 rounded-full font-bold opacity-50"
+                      disabled
+                    >
+                      RSVP (wallet not configured)
+                    </Button>
+                  ))}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium"
+                    asChild
+                  >
+                    <Link href={`/events/${entityKey}/checkin`}>Check-in</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium"
+                    asChild
+                  >
+                    <Link href={`/events/${entityKey}/attendees`}>Attendees</Link>
+                  </Button>
+                </div>
+
                 <Button
-                  size="lg"
-                  className="w-full h-14 text-lg bg-white text-black hover:bg-white/90 rounded-full font-bold opacity-50"
-                  disabled
+                  onClick={() => setShowTicket(true)}
+                  className="w-full h-12 bg-white/5 text-white hover:bg-white/10 rounded-full font-medium mt-2"
                 >
-                  RSVP (wallet not configured)
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><rect x="3" y="10" width="18" height="10" rx="2" ry="2" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="14" x2="21" y2="14" /></svg>
+                  Display Ticket
                 </Button>
-              ))}
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10"
-                asChild
-              >
-                <Link href={`/events/${entityKey}/checkin`}>Check-in</Link>
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10"
-                asChild
-              >
-                <Link href={`/events/${entityKey}/attendees`}>Attendees</Link>
-              </Button>
-            </div>
-
-            {/* Visual Barcode */}
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-white/30">
-              <span className="font-mono text-xs tracking-widest">
-                {entityKey.slice(0, 12)}...
-              </span>
-              <svg width="100" height="24" viewBox="0 0 100 24" fill="currentColor">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <rect
-                    key={i}
-                    x={i * 3 + (Math.random() * 2)}
-                    y="0"
-                    width={Math.random() > 0.5 ? 2 : 1}
-                    height="24"
-                  />
-                ))}
-              </svg>
+              </div>
             </div>
           </div>
         </div>
       </motion.div>
+
+      {/* Ticket Modal */}
+      {showTicket && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowTicket(false)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-full max-w-md z-10"
+          >
+            <button
+              onClick={() => setShowTicket(false)}
+              className="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/20 transition-all font-bold"
+            >
+              ✕
+            </button>
+            <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col relative border border-white/5 shadow-2xl overflow-hidden min-h-[600px]">
+              {/* Top Graphic Area */}
+              <div className="p-4 w-full aspect-4/3">
+                <div className="w-full h-full rounded-[1.5rem] overflow-hidden relative bg-muted" style={{ aspectRatio: "4/3" }}>
+                  {event.imageUrl ? (
+                    <img
+                      src={event.imageUrl}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <PatternGraphic seed={event.entityKey} variant="pink" />
+                  )}
+                  <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                    <span className="text-white font-bold text-lg">
+                      {dayStr}{" "}
+                      <span className="font-normal opacity-80">{yearStr}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ticket Info Area */}
+              <div className="px-8 pb-4">
+                <h2 className="font-malinton text-4xl font-bold text-white leading-tight mb-2">
+                  {event.title}
+                </h2>
+                <p className="text-white/60 text-sm mb-8 line-clamp-2">
+                  {event.community ? `${event.community} • ` : ""}
+                  {event.location || "Location TBA"}
+                </p>
+
+                <div className="grid grid-cols-2 gap-y-8 gap-x-4 mb-8">
+                  <div>
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Date</p>
+                    <p className="text-white font-bold text-lg">{dayStr} {yearStr}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Time</p>
+                    <p className="text-white font-bold text-lg">{timeStr}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-1">RSVPs</p>
+                    <p className="text-white font-bold text-lg">
+                      {event.currentRsvps} <span className="text-sm font-normal text-white/50">/ {event.capacity || "∞"}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Organizer</p>
+                    <p className="text-white font-bold text-lg truncate">{event.organizerName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ticket Dotted Separator */}
+              <div className="w-full relative py-2">
+                <div className="absolute w-8 h-8 rounded-full bg-black/80 -left-4 top-1/2 -translate-y-1/2 z-10" />
+                <div className="w-full border-t-[3px] border-dashed border-white/10" />
+                <div className="absolute w-8 h-8 rounded-full bg-black/80 -right-4 top-1/2 -translate-y-1/2 z-10" />
+              </div>
+
+              {/* Visual Barcode */}
+              <div className="p-8 mt-auto flex object-bottom">
+                <div className="w-full pt-4 border-t border-white/10 flex items-center justify-between text-white/30">
+                  <span className="font-mono text-xs tracking-widest">
+                    {entityKey.slice(0, 12)}...
+                  </span>
+                  <svg width="100" height="24" viewBox="0 0 100 24" fill="currentColor">
+                    {Array.from({ length: 30 }).map((_, i) => (
+                      <rect
+                        key={i}
+                        x={i * 3 + (Math.random() * 2)}
+                        y="0"
+                        width={Math.random() > 0.5 ? 2 : 1}
+                        height="24"
+                      />
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

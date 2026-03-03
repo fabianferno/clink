@@ -33,11 +33,17 @@ function CreateEventPageFallback() {
   const { ready, authenticated, login } = useAuth();
   if (!ready) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col pt-32 px-4 items-center">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <Card className="w-full max-w-2xl bg-[#141414] border-white/10">
+          <CardHeader>
+            <div className="h-8 w-1/2 bg-white/10 rounded animate-pulse" />
+            <div className="h-4 w-3/4 bg-white/10 rounded animate-pulse mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-12 w-full bg-white/10 rounded animate-pulse" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -143,8 +149,19 @@ function CreateEventPageWithPrivy() {
     return (
       <div className="min-h-screen bg-black">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-white/50 animate-pulse font-bold tracking-widest uppercase text-sm">Preparing Studio...</p>
+        <div className="flex-1 w-full max-w-2xl mx-auto px-4 pt-48 pb-32 flex flex-col relative z-10 animate-pulse">
+          <div className="h-4 w-24 bg-white/10 rounded mb-8" />
+          <div className="h-10 w-64 bg-white/10 rounded mb-10" />
+          <div className="space-y-8">
+            <div className="space-y-3"><div className="h-4 w-16 bg-white/10 rounded" /><div className="h-14 w-full bg-white/10 rounded-2xl" /></div>
+            <div className="space-y-3"><div className="h-4 w-24 bg-white/10 rounded" /><div className="h-28 w-full bg-white/10 rounded-2xl" /></div>
+            <div className="space-y-3"><div className="h-4 w-20 bg-white/10 rounded" /><div className="h-14 w-full bg-white/10 rounded-2xl" /></div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-3"><div className="h-4 w-12 bg-white/10 rounded" /><div className="h-14 w-full bg-white/10 rounded-2xl" /></div>
+              <div className="space-y-3"><div className="h-4 w-12 bg-white/10 rounded" /><div className="h-14 w-full bg-white/10 rounded-2xl" /></div>
+            </div>
+            <div className="h-16 w-full bg-white/10 rounded-full mt-6" />
+          </div>
         </div>
       </div>
     );

@@ -900,10 +900,35 @@ function FriendsPageFull() {
 
 function LoadingScreen() {
     return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
             <Header />
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <p className="text-white/50 animate-pulse font-bold tracking-widest uppercase text-sm">Locating Network...</p>
+            <div className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10 animate-pulse">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="h-10 w-40 bg-white/10 rounded-lg" />
+                    <div className="h-8 w-24 bg-white/10 rounded-full" />
+                </div>
+                <div className="flex flex-col gap-8">
+                    <div className="bg-[#141414] border border-white/5 rounded-3xl p-6 h-[350px] relative">
+                        <div className="w-24 h-4 bg-white/10 rounded mb-2" />
+                        <div className="w-32 h-6 bg-white/10 rounded" />
+                        <div className="absolute inset-x-0 bottom-1/2 flex justify-center">
+                            <div className="w-24 h-24 rounded-full bg-white/5" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                        <div className="w-32 h-3 bg-white/10 rounded" />
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-xl bg-white/10 shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-3/4 bg-white/10 rounded" />
+                                    <div className="h-3 w-1/2 bg-white/10 rounded" />
+                                    <div className="h-4 w-24 bg-white/10 rounded mt-2" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

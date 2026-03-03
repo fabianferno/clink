@@ -27,7 +27,15 @@ function WalletBalance({ address }: { address: string }) {
     };
   }, [address]);
 
-  if (balance === null) return null;
+  if (balance === null) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm font-medium text-white/50 animate-pulse">
+        <Wallet className="h-4 w-4 text-white/30" />
+        <div className="h-4 w-12 bg-white/10 rounded-md"></div>
+      </span>
+    );
+  }
+
   const display = parseFloat(balance) < 0.0001 ? "<0.0001" : parseFloat(balance).toFixed(4);
   return (
     <span className="flex items-center gap-1.5 text-sm font-medium text-white/70 tabular-nums">
@@ -82,12 +90,20 @@ export function Header() {
             Create Event
           </Link>
           {authenticated && (
-            <Link
-              href="/profile"
-              className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
-            >
-              Profile
-            </Link>
+            <>
+              <Link
+                href="/friends"
+                className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
+              >
+                Friends
+              </Link>
+              <Link
+                href="/profile"
+                className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
+              >
+                Profile
+              </Link>
+            </>
           )}
           {ready && (
             <>

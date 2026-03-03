@@ -104,12 +104,19 @@ export function EventsFeed() {
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-video bg-muted" />
-                <CardHeader>
-                  <div className="h-6 w-3/4 rounded bg-muted" />
-                  <div className="mt-2 h-4 w-1/2 rounded bg-muted" />
-                </CardHeader>
+              <Card key={i} className="animate-pulse h-[400px] bg-card border-white/10 flex flex-col p-2 rounded-[1.5rem]">
+                <div className="relative aspect-[4/3] w-full rounded-[1rem] bg-white/5 mb-4" />
+                <div className="flex flex-col flex-1 px-2 pb-2">
+                  <div className="h-6 w-3/4 rounded bg-white/10 mb-2" />
+                  <div className="h-4 w-full rounded bg-white/5 mb-2" />
+                  <div className="h-4 w-5/6 rounded bg-white/5 mb-4" />
+                  <div className="mt-auto space-y-2 pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between">
+                      <div className="h-3 w-1/3 rounded bg-white/10" />
+                      <div className="h-3 w-1/4 rounded bg-white/10" />
+                    </div>
+                  </div>
+                </div>
               </Card>
             ))}
           </div>

@@ -91,12 +91,34 @@ export default function ProfilePage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-white/50 animate-pulse font-bold tracking-widest uppercase text-sm">
-            Loading Identity...
-          </p>
+        <div className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10 animate-pulse">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-white text-2xl font-bold flex items-center gap-2">
+              Identity <span className="text-secondary">✦</span>
+            </h1>
+          </div>
+          <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col border border-white/5 shadow-2xl overflow-hidden relative min-h-[500px]">
+            <div className="p-6 pb-2 w-full flex flex-col items-center">
+              <div className="w-32 h-32 rounded-[1.5rem] bg-white/10 mb-6" />
+              <div className="h-10 w-48 bg-white/10 rounded-lg mb-4" />
+              <div className="h-6 w-32 bg-white/5 rounded-full" />
+            </div>
+            <div className="w-full relative py-6">
+              <div className="absolute w-8 h-8 rounded-full bg-black -left-4 top-1/2 -translate-y-1/2 z-10" />
+              <div className="w-full border-t-[3px] border-dashed border-white/10" />
+              <div className="absolute w-8 h-8 rounded-full bg-black -right-4 top-1/2 -translate-y-1/2 z-10" />
+            </div>
+            <div className="px-8 pb-8 flex flex-col gap-6">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-6 h-36" />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 h-24" />
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 h-24" />
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 h-24" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -194,13 +216,12 @@ export default function ProfilePage() {
                     {clinkScore}%
                   </span>
                   <Badge
-                    className={`h-6 font-bold uppercase tracking-widest text-[10px] border ${
-                      clinkScore >= 80
+                    className={`h-6 font-bold uppercase tracking-widest text-[10px] border ${clinkScore >= 80
                         ? "bg-green-500/20 text-green-400 border-green-500/30"
                         : clinkScore >= 50
-                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                        : "bg-red-500/20 text-red-400 border-red-500/30"
-                    }`}
+                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                          : "bg-red-500/20 text-red-400 border-red-500/30"
+                      }`}
                   >
                     {clinkScore >= 80 ? "Reliable" : clinkScore >= 50 ? "Average" : "Risky"}
                   </Badge>
@@ -223,8 +244,8 @@ export default function ProfilePage() {
                 {profile === null && !profileLoading
                   ? "RSVP to your first event to start building your score."
                   : profile?.isNewcomer
-                  ? `${profile.totalRsvps}/3 RSVPs to activate your score.`
-                  : "Based on your show-up rate across all events."}
+                    ? `${profile.totalRsvps}/3 RSVPs to activate your score.`
+                    : "Based on your show-up rate across all events."}
               </p>
             </div>
 
