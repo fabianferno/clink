@@ -102,7 +102,7 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
           { key: "event_key", value: eventKey },
           { key: "attendee", value: walletAddress },
           { key: "rsvp_timestamp", value: now },
-          { key: "checked_in", value: 0 },
+          { key: "checked_in", value: "0" },
         ],
         expiresIn: ExpirationTime.fromDays(60),
       });
@@ -134,9 +134,9 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
           attributes: [
             { key: "type", value: "profile" },
             { key: "address", value: walletAddress },
-            { key: "show_up_rate", value: 0 },
-            { key: "streak", value: 0 },
-            { key: "last_checkin", value: 0 },
+            { key: "show_up_rate", value: "0" },
+            { key: "streak", value: "0" },
+            { key: "last_checkin", value: "0" },
             { key: "newcomer", value: 1 },
           ],
           expiresIn: ExpirationTime.fromDays(365),
@@ -156,8 +156,8 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
           payload: jsonToPayload({ ...pd, totalRsvps }),
           contentType: "application/json",
           attributes: existingAttrs.map((a) => {
-            if (a.key === "newcomer") return { key: "newcomer", value: newcomer };
-            if (a.key === "show_up_rate") return { key: "show_up_rate", value: showUpRate };
+            if (a.key === "newcomer") return { key: "newcomer", value: String(newcomer) };
+            if (a.key === "show_up_rate") return { key: "show_up_rate", value: String(showUpRate) };
             return a;
           }),
           expiresIn: ExpirationTime.fromDays(365),
@@ -245,6 +245,14 @@ export default function EventDetailPage() {
         }
         const payload = entity.payload ? entity.toJson() : {};
         const attrs = entity.attributes || [];
+        // Query actual RSVP count (event payload.currentRsvps is never updated)
+        const rsvpCountQ = publicClient.buildQuery();
+        const rsvpCountResult = await rsvpCountQ
+          .where(eq("type", "rsvp"))
+          .where(eq("event_key", entityKey))
+          .limit(1000)
+          .fetch();
+        const currentRsvps = rsvpCountResult.entities.length;
         setEvent({
           entityKey: entity.key,
           title: (payload?.title as string) || "Untitled Event",
@@ -254,7 +262,7 @@ export default function EventDetailPage() {
           organizerName: (payload?.organizerName as string) || "Anonymous",
           organizerAddress: (payload?.organizerAddress as string) || "",
           capacity: (payload?.capacity as number) || 0,
-          currentRsvps: (payload?.currentRsvps as number) || 0,
+          currentRsvps,
           eventTimestamp:
             (attrs.find((a) => a.key === "event_timestamp")?.value as number) || 0,
           community: attrs.find((a) => a.key === "community")?.value as string | undefined,

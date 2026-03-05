@@ -176,12 +176,11 @@ export default function AttendeesPage() {
           setEventTitle((ep.title as string) || "Event");
         }
 
-        // Fetch checked-in RSVPs
+        // Fetch all RSVPs (both RSVPed and checked-in)
         const rsvpQ = publicClient.buildQuery();
         const rsvpResult = await rsvpQ
           .where(eq("type", "rsvp"))
           .where(eq("event_key", entityKey))
-          .where(eq("checked_in", 1))
           .withPayload(true)
           .withAttributes(true)
           .limit(100)
@@ -274,10 +273,10 @@ export default function AttendeesPage() {
           <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <h1 className="font-malinton text-2xl font-bold flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Checked-in Attendees
+              Attendees
             </h1>
             <p className="text-muted-foreground text-sm">
-              {!loading && `${attendees.length} ${attendees.length === 1 ? "person" : "people"} checked in`}
+              {!loading && `${attendees.length} ${attendees.length === 1 ? "person" : "people"} attending`}
             </p>
           </div>
 

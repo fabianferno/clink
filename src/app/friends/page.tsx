@@ -227,7 +227,7 @@ function FriendsPageFull() {
             const myRsvps = await myRsvpQ
                 .where(eq("type", "rsvp"))
                 .where(eq("attendee", walletAddress))
-                .where(eq("checked_in", 1))
+                .where(eq("checked_in", "1"))
                 .withAttributes(true)
                 .limit(100)
                 .fetch();
@@ -316,7 +316,7 @@ function FriendsPageFull() {
                     const upRsvps = await upRsvpQ
                         .where(eq("type", "rsvp"))
                         .where(eq("attendee", friend.address))
-                        .where(eq("checked_in", 0))
+                        .where(eq("checked_in", "0"))
                         .withAttributes(true)
                         .limit(20)
                         .fetch();

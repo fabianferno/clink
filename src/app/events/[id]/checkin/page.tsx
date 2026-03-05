@@ -214,7 +214,7 @@ function CheckinPageFull() {
           payload: jsonToPayload({ ...rsvpPayload, checkedIn: true, checkedInTimestamp: now }),
           contentType: "application/json",
           attributes: rsvpAttrs.map((a) =>
-            a.key === "checked_in" ? { key: "checked_in", value: 1 } : a
+            a.key === "checked_in" ? { key: "checked_in", value: "1" } : a
           ),
           expiresIn: ExpirationTime.fromDays(60),
         });
@@ -235,7 +235,7 @@ function CheckinPageFull() {
             { key: "event_key", value: entityKey },
             { key: "attendee", value: walletAddress },
             { key: "rsvp_timestamp", value: now },
-            { key: "checked_in", value: 1 },
+            { key: "checked_in", value: "1" },
           ],
           expiresIn: ExpirationTime.fromDays(60),
         });
@@ -315,10 +315,10 @@ function CheckinPageFull() {
           }),
           contentType: "application/json",
           attributes: existingAttrs.map((a) => {
-            if (a.key === "show_up_rate") return { key: "show_up_rate", value: showUpRate };
-            if (a.key === "streak") return { key: "streak", value: streak };
-            if (a.key === "last_checkin") return { key: "last_checkin", value: now };
-            if (a.key === "newcomer") return { key: "newcomer", value: newcomer };
+            if (a.key === "show_up_rate") return { key: "show_up_rate", value: String(showUpRate) };
+            if (a.key === "streak") return { key: "streak", value: String(streak) };
+            if (a.key === "last_checkin") return { key: "last_checkin", value: String(now) };
+            if (a.key === "newcomer") return { key: "newcomer", value: String(newcomer) };
             return a;
           }),
           expiresIn: ExpirationTime.fromDays(365),
