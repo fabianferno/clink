@@ -63,7 +63,6 @@ export const metadata: Metadata = {
 };
 
 import { MobileNav } from "@/components/mobile-nav";
-import { PageTransition } from "@/components/page-transition";
 import Ribbons from "@/components/ribbons";
 
 export default function RootLayout({
@@ -91,9 +90,7 @@ export default function RootLayout({
         </div>
         <div className="relative z-10 flex flex-col flex-1 min-h-screen">
           <Providers>
-            <PageTransition>
-              {children}
-            </PageTransition>
+            <div className="flex-1 w-full">{children}</div>
             <MobileNav />
           </Providers>
         </div>

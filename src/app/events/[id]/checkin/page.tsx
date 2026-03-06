@@ -213,6 +213,29 @@ function CheckinPageFull() {
         ),
       });
 
+      // Transition event status → active
+      try {
+        const hexKey = entityKey.startsWith("0x") ? entityKey : `0x${entityKey}`;
+        const eventEntity = await publicClient.getEntity(hexKey as `0x${string}`);
+        if (eventEntity) {
+          const existingAttrs = eventEntity.attributes || [];
+          const statusAttr = existingAttrs.find((a) => a.key === "status");
+          if (!statusAttr || statusAttr.value !== "active") {
+            await wc.updateEntity({
+              entityKey: hexKey as `0x${string}`,
+              payload: eventEntity.payload ?? new Uint8Array(),
+              contentType: "application/json",
+              attributes: existingAttrs.map((a) =>
+                a.key === "status" ? { key: "status", value: "active" } : a
+              ),
+              expiresIn: ExpirationTime.fromDays(30),
+            });
+          }
+        }
+      } catch {
+        // non-critical — check-in code was still published
+      }
+
       setPublishStatus("done");
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : "Failed to publish code");

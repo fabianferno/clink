@@ -39,7 +39,7 @@ interface EventData {
 }
 
 // Only rendered inside PrivyProvider (when hasPrivy is true)
-function RsvpButton({ eventKey }: { eventKey: string }) {
+function RsvpButton({ eventKey, capacity, currentRsvps }: { eventKey: string; capacity: number; currentRsvps: number }) {
   const { wallets } = useWallets();
   const { authenticated, login, user } = useAuth();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
@@ -209,6 +209,15 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
       setStatus("error");
     }
   };
+
+  const isFull = capacity > 0 && currentRsvps >= capacity && status !== "success" && status !== "already";
+  if (isFull) {
+    return (
+      <Button size="lg" className="w-full h-14 text-lg rounded-full font-bold cursor-default opacity-60" disabled>
+        Event Full
+      </Button>
+    );
+  }
 
   if (status === "success") {
     return (
@@ -542,7 +551,7 @@ export default function EventDetailPage() {
               <div className="pt-4 border-t border-white/10 space-y-3">
                 {!isPast &&
                   (hasPrivy ? (
-                    <RsvpButton eventKey={entityKey} />
+                    <RsvpButton eventKey={entityKey} capacity={event.capacity} currentRsvps={event.currentRsvps} />
                   ) : (
                     <Button
                       size="lg"
