@@ -68,7 +68,7 @@ Clink addresses the 40–60% no-show rates on free events by:
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── page.tsx              # Landing (hero, HowItWorks, WhyClink, ForOrganizersAttendees, PoweredByArkiv)
@@ -106,6 +106,18 @@ scripts/
 ├── seed-demo.ts              # Demo events, profiles, RSVPs, check-ins, clinks
 └── seed-incoming-clinks.ts   # Seed pending clinks for a user (CLINK_RECEIVER)
 ```
+
+### Architecture
+
+```text
+Browser (Next.js App Router)
+  ├── Privy           → wallet auth, chain switching, tx signing
+  ├── Arkiv SDK       → all reads via publicClient.buildQuery()
+  │                     all writes via createArkivWalletClient(privyProvider)
+  └── No backend      → zero API routes; all state lives on Arkiv Mendoza
+```
+
+All reads are stateless queries against the Arkiv RPC. All writes go through the user's wallet (Privy-managed) via `createArkivWalletClient`, which wraps the EIP-1193 provider from Privy into Arkiv's wallet client. There is no server-side state, no database, and no admin key.
 
 ## Arkiv Integration
 
