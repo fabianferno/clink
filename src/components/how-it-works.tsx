@@ -72,8 +72,8 @@ export function HowItWorks() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
                   {item.step}
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/20">
-                  <item.icon className="h-6 w-6 text-secondary" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-200/20">
+                  <item.icon className="h-6 w-6 text-zinc-200" />
                 </div>
               </div>
               <h3 className="font-malinton mb-2 text-lg font-semibold text-foreground">

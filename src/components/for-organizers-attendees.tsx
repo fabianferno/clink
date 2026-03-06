@@ -40,7 +40,7 @@ export function ForOrganizersAttendees() {
             Organizers & attendees
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Whether you're hosting an event or showing up — Clink works for you.
+            Whether you&apos;re hosting an event or showing up — Clink works for you.
           </p>
         </motion.div>
 
@@ -87,8 +87,8 @@ export function ForOrganizersAttendees() {
             className="rounded-2xl border border-white/5 bg-card/50 p-8 backdrop-blur"
           >
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/20">
-                <Users className="h-6 w-6 text-secondary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200/20">
+                <Users className="h-6 w-6 text-zinc-200" />
               </div>
               <div>
                 <h3 className="font-malinton text-xl font-semibold text-foreground">
@@ -105,12 +105,12 @@ export function ForOrganizersAttendees() {
                   key={i}
                   className="flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-zinc-200" />
                   {feature}
                 </li>
               ))}
             </ul>
-            <Button variant="outline" asChild>
+            <Button className="bg-zinc-200 text-zinc-900 font-bold transition-all duration-100 ease-in-out hover:bg-zinc-200/30 hover:text-zinc-100" variant="default" size="lg" asChild>
               <Link href="/events">Browse events</Link>
             </Button>
           </motion.div>

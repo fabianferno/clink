@@ -42,7 +42,7 @@ export default function Home() {
 
         {/* Video with logo clip-mask - top right, ~60% of screen */}
         <div
-          className="absolute -top-250 right-0 w-[60vw] h-[60vh] min-h-[2800px] z-0"
+          className="absolute filter hue-rotate-320 -top-250 right-0 w-[60vw] h-[60vh] min-h-[2800px] z-0"
           style={{
             maskImage: "url('/logo.svg')",
             maskSize: "contain",
