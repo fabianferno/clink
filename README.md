@@ -4,6 +4,12 @@
 
 Clink is an event platform that solves the no-show problem and rewards people who actually show up — built on [Arkiv](https://arkiv.network)'s queryable, time-scoped storage on Ethereum.
 
+
+## Click below to watch the demo
+[![Watch the video](https://github.com/user-attachments/assets/4480b300-63fb-4a6b-baff-fd6c8d820846)](https://youtu.be/wogG_TWxd9I)
+
+ 
+
 ## Overview
 
 Clink addresses the 40–60% no-show rates on free events by:
