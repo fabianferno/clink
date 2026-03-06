@@ -56,31 +56,28 @@ function MyEventsContent() {
       const now = Math.floor(Date.now() / 1000);
       const organizerNorm = walletAddress.toLowerCase();
 
-      // Query events by organizer attribute (new events) or fallback to all + filter by payload
+      // Use ownedBy to fetch events owned by this wallet (primary Arkiv ownership model)
       const query = publicClient.buildQuery();
       let result = await query
         .where(eq("type", "event"))
-        .where(eq("organizer", organizerNorm))
+        .ownedBy(walletAddress as `0x${string}`)
         .withPayload(true)
         .withAttributes(true)
         .limit(50)
         .fetch();
 
-      // If no results from organizer attribute, fetch all events and filter by payload (legacy events)
+      // Fallback: query by organizer attribute for events created under different wallets
       let entitiesToUse = result.entities;
       if (entitiesToUse.length === 0) {
         const fallbackQuery = publicClient.buildQuery();
         const fallback = await fallbackQuery
           .where(eq("type", "event"))
+          .where(eq("organizer", organizerNorm))
           .withPayload(true)
           .withAttributes(true)
           .limit(200)
           .fetch();
-        entitiesToUse = fallback.entities.filter((e) => {
-          const p = e.payload ? e.toJson() : {};
-          const org = (p.organizerAddress as string)?.toLowerCase?.();
-          return org === organizerNorm;
-        });
+        entitiesToUse = fallback.entities;
       }
 
       // RSVP counts

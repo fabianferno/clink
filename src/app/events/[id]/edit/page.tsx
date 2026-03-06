@@ -4,8 +4,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,9 @@ function EditEventPageContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -56,7 +60,7 @@ function EditEventPageContent() {
     time: "",
     capacity: "",
     community: "",
-    status: "upcoming" as "upcoming" | "active" | "past",
+    status: "upcoming" as "upcoming" | "active" | "past" | "cancelled",
   });
 
   const walletAddress =
@@ -172,6 +176,62 @@ function EditEventPageContent() {
       setError(err instanceof Error ? err.message : "Failed to update event");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    const wallet = wallets[0];
+    if (!wallet) { setCancelError("No wallet connected."); return; }
+
+    setCancelling(true);
+    setCancelError(null);
+
+    try {
+      const provider = await wallet.getEthereumProvider();
+      await wallet.switchChain(mendoza.id);
+      const wc = createArkivWalletClient(provider, wallet.address as `0x${string}`);
+      const hexKey = entityKey.startsWith("0x") ? entityKey : `0x${entityKey}`;
+      const now = Math.floor(Date.now() / 1000);
+
+      // 1. Create a cancellation flag entity (flags-as-entities pattern)
+      await wc.createEntity({
+        payload: jsonToPayload({
+          eventKey: entityKey,
+          eventTitle: form.title,
+          cancelledBy: wallet.address,
+          cancelledAt: now,
+          reason: "Cancelled by organizer",
+        }),
+        contentType: "application/json",
+        attributes: [
+          { key: "type", value: "flag" },
+          { key: "flag_type", value: "cancelled" },
+          { key: "event_key", value: entityKey },
+        ],
+        expiresIn: ExpirationTime.fromDays(30),
+      });
+
+      // 2. Transition event status → cancelled
+      const entity = await publicClient.getEntity(hexKey as `0x${string}`);
+      if (entity) {
+        const attrs = entity.attributes || [];
+        await wc.updateEntity({
+          entityKey: hexKey as `0x${string}`,
+          payload: entity.payload ?? new Uint8Array(),
+          contentType: "application/json",
+          attributes: attrs.map((a) =>
+            a.key === "status" ? { key: "status", value: "cancelled" } : a
+          ),
+          expiresIn: ExpirationTime.fromDays(30),
+        });
+      }
+
+      router.push("/events/my-events");
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Failed to cancel event");
+    } finally {
+      setCancelling(false);
+      setShowCancelConfirm(false);
     }
   };
 
@@ -390,6 +450,75 @@ function EditEventPageContent() {
             </Button>
           </div>
         </form>
+
+        {/* Cancel Event section */}
+        {form.status !== "cancelled" && (
+          <div className="mt-10 pt-8 border-t border-white/10">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/15 border border-red-500/20 mt-0.5">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white mb-1">Cancel this event</h3>
+                  <p className="text-sm text-white/50">
+                    This creates a cancellation record on Arkiv and marks the event as cancelled. Attendees will see it as cancelled. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              {cancelError && (
+                <p className="text-sm text-red-400 mb-3">{cancelError}</p>
+              )}
+
+              <AnimatePresence>
+                {showCancelConfirm ? (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3"
+                  >
+                    <p className="text-sm font-bold text-red-300">
+                      Are you sure? This will cancel &quot;{form.title}&quot; and cannot be reversed.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowCancelConfirm(false)}
+                        disabled={cancelling}
+                        className="flex-1 border-white/20 text-white hover:bg-white/10"
+                      >
+                        Keep event
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleCancel}
+                        disabled={cancelling}
+                        className="flex-1 bg-red-500 text-white hover:bg-red-400 font-bold"
+                      >
+                        {cancelling ? "Cancelling..." : "Yes, cancel event"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                  >
+                    Cancel this event
+                  </Button>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
   );

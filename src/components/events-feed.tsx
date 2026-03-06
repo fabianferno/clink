@@ -11,7 +11,7 @@ import { PatternGraphic } from "@/components/ui/pattern-graphic";
 import { cn } from "@/lib/utils";
 import { publicClient } from "@/lib/arkiv";
 import ShinyText from "@/components/ui/shiny-text";
-import { eq, gt } from "@arkiv-network/sdk/query";
+import { eq, gt, asc } from "@arkiv-network/sdk/query";
 import { useEffect, useState, useCallback, useMemo } from "react";
 
 interface EventData {
@@ -49,6 +49,15 @@ function StatusBadge({ status }: { status?: string }) {
       </div>
     );
   }
+  if (status === "cancelled") {
+    return (
+      <div className="absolute top-3 right-3">
+        <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 border border-red-500/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-red-400 backdrop-blur">
+          Cancelled
+        </span>
+      </div>
+    );
+  }
   return null;
 }
 
@@ -70,6 +79,7 @@ export function EventsFeed() {
       let result = await query
         .where(eq("type", "event"))
         .where(gt("event_timestamp", now))
+        .orderBy(asc("event_timestamp", "number"))
         .withPayload(true)
         .withAttributes(true)
         .limit(20)
@@ -78,6 +88,7 @@ export function EventsFeed() {
         const fallbackQuery = publicClient.buildQuery();
         result = await fallbackQuery
           .where(eq("type", "event"))
+          .orderBy(asc("event_timestamp", "number"))
           .withPayload(true)
           .withAttributes(true)
           .limit(50)
@@ -125,7 +136,7 @@ export function EventsFeed() {
         })
         .filter((e) => e.eventTimestamp > now)
         .sort((a, b) => {
-          // Live events first, then by timestamp
+          // Live events pinned to top, then ascending by timestamp (already ordered by Arkiv)
           if (a.status === "active" && b.status !== "active") return -1;
           if (b.status === "active" && a.status !== "active") return 1;
           return a.eventTimestamp - b.eventTimestamp;
@@ -173,6 +184,9 @@ export function EventsFeed() {
       if (selectedStatus) {
         const effectiveStatus = e.status || "upcoming";
         if (effectiveStatus !== selectedStatus) return false;
+      } else {
+        // Hide cancelled events unless explicitly filtered
+        if (e.status === "cancelled") return false;
       }
       return true;
     });
@@ -227,7 +241,7 @@ export function EventsFeed() {
         {/* Filter pills */}
         <div className="flex flex-wrap gap-2">
           {/* Status filters */}
-          {(["upcoming", "active", "past"] as const).map((s) => (
+          {(["upcoming", "active", "past", "cancelled"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setSelectedStatus(selectedStatus === s ? null : s)}
@@ -236,11 +250,13 @@ export function EventsFeed() {
                 selectedStatus === s
                   ? s === "active"
                     ? "bg-green-500/20 border-green-500/50 text-green-400"
+                    : s === "cancelled"
+                    ? "bg-red-500/20 border-red-500/50 text-red-400"
                     : "bg-primary/20 border-primary/50 text-primary"
                   : "bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/30"
               )}
             >
-              {s === "active" ? "Live" : s === "past" ? "Ended" : "Upcoming"}
+              {s === "active" ? "Live" : s === "past" ? "Ended" : s === "cancelled" ? "Cancelled" : "Upcoming"}
             </button>
           ))}
 

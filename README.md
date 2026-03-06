@@ -42,6 +42,16 @@ Clink addresses the 40–60% no-show rates on free events by:
 - **Friends** — Network graph of confirmed connections; accept/decline pending requests; add friends via QR scan or by entering their address
 - **Check-in** — Enter code or scan QR at events to prove attendance
 
+### Filtering, Search & UX
+
+- **Multi-filter events feed** — Filter pills: Upcoming / Live / Ended / Cancelled + community tags; keyword search across title, description, location; results update instantly
+- **Capacity badge** — "Full" badge when RSVPs ≥ capacity; RSVP button disabled for full/cancelled events
+- **Status badges** — Live (green pulsing), Upcoming, Ended, Cancelled — derived from `status` attribute and `event_timestamp`
+- **Onboarding tour** — First-time visitors get a 7-step guided tour (nextstepjs); ? button re-triggers it anytime
+- **Faucet UX** — Zero-balance wallets automatically see an amber "No funds" pill with a popover linking to the Mendoza faucet; address copy included
+- **Wallet abstraction** — Privy handles wallet creation (embedded wallets for email users), chain switching to Mendoza, and all signing; users don't need to know about Arkiv
+- **Error states** — Network errors, failed transactions, forbidden access (non-owner edit attempt), and form validation all surface clear messages; no silent failures
+
 ## Tech Stack
 
 - **Next.js 16** (App Router) + TypeScript
@@ -97,9 +107,13 @@ scripts/
 └── seed-incoming-clinks.ts   # Seed pending clinks for a user (CLINK_RECEIVER)
 ```
 
-## Arkiv Data Model
+## Arkiv Integration
 
-All data is stored on Arkiv Mendoza testnet. Entity types:
+Clink uses Arkiv as its **only** data layer — no backend, no traditional database. Every event, RSVP, check-in, profile, connection, and cancellation is a queryable, wallet-owned entity on the Mendoza testnet.
+
+### Entity Schema
+
+Seven distinct entity types with typed, queryable attributes:
 
 | Type | Key attributes | Payload | Expiry |
 |------|----------------|---------|--------|
@@ -107,8 +121,99 @@ All data is stored on Arkiv Mendoza testnet. Entity types:
 | `profile` | `type`, `address`, `show_up_rate`, `streak`, `last_checkin`, `newcomer` | displayName, totalRsvps, totalCheckins, showUpRate, currentStreak | 365 days |
 | `rsvp` | `type`, `event_key`, `attendee`, `rsvp_timestamp`, `checked_in` | attendeeAddress, attendeeName, eventEntityKey, checkedIn, checkedInTimestamp | 60 days |
 | `attendance` | `type`, `attendee`, `community`, `event_date` | attendeeAddress, eventEntityKey, eventTitle, checkinTimestamp | 365 days |
-| `checkin_code` | `type`, `event_key`, `code` | code, eventKey, createdAt | 2 hours |
+| `checkin_code` | `type`, `event_key`, `code` | code, eventKey, createdAt | **2 hours** |
 | `clink` | `type`, `initiator`, `receiver`, `event_key`, `status`, `clink_timestamp` | initiator, receiver, eventEntityKey, eventTitle, status (pending/confirmed) | 365 days |
+| `flag` | `type`, `flag_type`, `event_key` | eventKey, eventTitle, cancelledBy, cancelledAt, reason | 30 days |
+
+### Query Model
+
+Queries use Arkiv's native `buildQuery()` API — not application-side filtering:
+
+```typescript
+// Events feed: multi-attribute filter + native attribute-based sort
+const result = await publicClient.buildQuery()
+  .where(eq("type", "event"))
+  .where(gt("event_timestamp", nowInSeconds))
+  .orderBy(asc("event_timestamp", "number"))   // ← native sort
+  .withPayload(true)
+  .withAttributes(true)
+  .limit(50)
+  .fetch();
+
+// My Events: ownedBy() — wallet-level ownership, not attribute matching
+const result = await publicClient.buildQuery()
+  .where(eq("type", "event"))
+  .ownedBy(walletAddress)                       // ← entity owner check
+  .withPayload(true)
+  .withAttributes(true)
+  .limit(50)
+  .fetch();
+
+// RSVPs for an event
+const result = await publicClient.buildQuery()
+  .where(eq("type", "rsvp"))
+  .where(eq("event_key", entityKey))
+  .withPayload(true)
+  .withAttributes(true)
+  .fetch();
+```
+
+Predicates used: `eq`, `gt`, `asc` from `@arkiv-network/sdk/query`. Sorting is performed by Arkiv at the storage layer.
+
+### Ownership Model
+
+End-user wallets own their entities directly. The organizer's wallet creates and owns event entities — `.ownedBy()` is used to query "my events" by wallet ownership, not by an `organizer` attribute. Attendees own their own RSVPs and attendance records. Profiles are self-owned and self-updated.
+
+Edit/update flows verify wallet ownership before writing to Arkiv. A user who didn't create an event cannot update it (the Arkiv write will fail, and the UI enforces this with a forbidden state).
+
+### Entity Relationships
+
+```text
+event ──────────────────────────────────────────────────┐
+ └── rsvp (event_key → event)                           │
+      └── attendance (event_date, attendee → profile)   │
+ └── checkin_code (event_key → event)                   │
+ └── flag (event_key → event, flag_type: "cancelled")   │
+ └── clink (event_key → event, initiator/receiver → profile)
+```
+
+References are maintained on create: every `rsvp`, `attendance`, `checkin_code`, `clink`, and `flag` entity stores the parent `event_key` as a queryable attribute. This enables reliable navigation (load all RSVPs for an event, load all attendances for a user, load all clinks involving an event).
+
+### Differentiated Expiration
+
+Expiration is set per entity type to match real-world data lifecycle:
+
+| Entity | Expiry | Reasoning |
+| ------ | ------ | --------- |
+| `checkin_code` | **2 hours** | Code must expire quickly — no reuse after event |
+| `event` | 30 days | Events are no longer relevant shortly after they end |
+| `flag` | 30 days | Cancellation flag lives as long as the event |
+| `rsvp` | 60 days | Buffer past event end for post-event flows |
+| `attendance` | 365 days | Permanent reputation record |
+| `clink` | 365 days | Permanent social connection record |
+| `profile` | 365 days | Permanent identity/reputation record |
+
+### Entity Lifecycle Transitions
+
+Events have a four-state lifecycle managed by Arkiv entity updates:
+
+```text
+upcoming → active    (organizer publishes check-in code)
+active   → past      (time-based, event_timestamp in the past)
+upcoming → cancelled (organizer cancels — creates a flag entity)
+```
+
+Cancellation uses the **flags-as-entities** pattern: instead of just flipping a status attribute, a separate `flag` entity is created on-chain with `flag_type: "cancelled"` and a reference to the event. This makes cancellation an auditable, queryable, first-class event in the data model — not a silent attribute mutation.
+
+### Advanced Features Summary
+
+| Feature | Description |
+| ------- | ----------- |
+| `orderBy()` | Native attribute-based sort on `event_timestamp` |
+| `ownedBy()` | Wallet-level entity ownership for "my events" |
+| Flags as entities | Cancellation flag is a separate Arkiv entity |
+| Lifecycle transitions | `upcoming → active → past / cancelled` via entity updates |
+| Time-scoped codes | `checkin_code` auto-expires after 2h via Arkiv expiration |
 
 ## Getting Started
 
