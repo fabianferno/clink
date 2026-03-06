@@ -36,7 +36,7 @@ export function HowItWorks() {
   return (
     <section className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-amber-500/5 blur-3xl" />
+        <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-secondary/10 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-6xl">
@@ -46,7 +46,7 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="mb-16 text-center"
         >
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-emerald-500">
+          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-primary">
             How it works
           </p>
           <h2 className="font-malinton mb-6 text-4xl font-bold text-foreground sm:text-5xl">
@@ -68,11 +68,13 @@ export function HowItWorks() {
               transition={{ delay: i * 0.1 }}
               className="relative rounded-2xl border border-white/5 bg-card/50 p-6 backdrop-blur"
             >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                {item.step}
-              </div>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
-                <item.icon className="h-6 w-6 text-amber-500" />
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
+                  {item.step}
+                </div>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/20">
+                  <item.icon className="h-6 w-6 text-secondary" />
+                </div>
               </div>
               <h3 className="font-malinton mb-2 text-lg font-semibold text-foreground">
                 {item.title}

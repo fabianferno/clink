@@ -43,6 +43,25 @@ Create `.env.local`:
 NEXT_PUBLIC_PRIVY_APP_ID=your-privy-app-id
 ```
 
+### Seeding Demo Data
+
+To populate the platform with demo events, RSVPs, profiles, and clinks:
+
+```bash
+# 1. Generate a wallet and get the address
+pnpm run seed
+
+# 2. Fund the printed address at https://mendoza.hoodi.arkiv.network/faucet
+
+# 3. Add the private key to .env.local (or .env):
+#    SEED_PRIVATE_KEY=0x...
+
+# 4. Run the seed again
+pnpm run seed
+```
+
+The seed creates 4 events, 6 attendee profiles, RSVPs with check-ins, and clink connections.
+
 ### Run Development Server
 
 ```bash

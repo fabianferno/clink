@@ -34,31 +34,45 @@ export function EventsFeed() {
       if (showLoading) setLoading(true);
       const now = Math.floor(Date.now() / 1000);
       const query = publicClient.buildQuery();
-      const result = await query
+      let result = await query
         .where(eq("type", "event"))
         .where(gt("event_timestamp", now))
         .withPayload(true)
         .withAttributes(true)
         .limit(20)
         .fetch();
+      if (result.entities.length === 0) {
+        const fallbackQuery = publicClient.buildQuery();
+        result = await fallbackQuery
+          .where(eq("type", "event"))
+          .withPayload(true)
+          .withAttributes(true)
+          .limit(50)
+          .fetch();
+      }
 
-      const eventList: EventData[] = result.entities.map((entity) => {
-        const payload = entity.payload ? entity.toJson() : {};
-        const attrs = entity.attributes || [];
-        const eventTimestamp = attrs.find((a) => a.key === "event_timestamp")?.value as number;
-        return {
-          entityKey: entity.key,
-          title: (payload?.title as string) || "Untitled Event",
-          description: (payload?.description as string) || "",
-          location: (payload?.location as string) || "",
-          imageUrl: payload?.imageUrl as string | undefined,
-          organizerName: (payload?.organizerName as string) || "Anonymous",
-          capacity: (payload?.capacity as number) || 0,
-          currentRsvps: (payload?.currentRsvps as number) || 0,
-          eventTimestamp: eventTimestamp || 0,
-          community: attrs.find((a) => a.key === "community")?.value as string | undefined,
-        };
-      });
+      const eventList: EventData[] = result.entities
+        .map((entity) => {
+          const payload = entity.payload ? entity.toJson() : {};
+          const attrs = entity.attributes || [];
+          const rawTs = attrs.find((a) => a.key === "event_timestamp")?.value;
+          const eventTimestamp = typeof rawTs === "number" ? rawTs : typeof rawTs === "string" ? parseInt(rawTs, 10) : 0;
+          return {
+            entityKey: entity.key,
+            title: (payload?.title as string) || "Untitled Event",
+            description: (payload?.description as string) || "",
+            location: (payload?.location as string) || "",
+            imageUrl: payload?.imageUrl as string | undefined,
+            organizerName: (payload?.organizerName as string) || "Anonymous",
+            capacity: (payload?.capacity as number) || 0,
+            currentRsvps: (payload?.currentRsvps as number) || 0,
+            eventTimestamp: eventTimestamp || 0,
+            community: attrs.find((a) => a.key === "community")?.value as string | undefined,
+          };
+        })
+        .filter((e) => e.eventTimestamp > now)
+        .sort((a, b) => a.eventTimestamp - b.eventTimestamp)
+        .slice(0, 20);
 
       setEvents(eventList);
     } catch (err) {
@@ -173,7 +187,7 @@ export function EventsFeed() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event, i) => {
               const dateObj = new Date(event.eventTimestamp * 1000);
-              const dayStr = dateObj.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" }).replace("/", ".");
+              const dayStr = `${dateObj.getDate().toString().padStart(2, "0")}/${(dateObj.getMonth() + 1).toString().padStart(2, "0")}`;
               const weekdayStr = dateObj.toLocaleDateString("en-US", { weekday: "short" });
 
               return (

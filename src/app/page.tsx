@@ -1,5 +1,9 @@
 "use client";
 import { Header } from "@/components/header";
+import { WhyClink } from "@/components/why-clink";
+import { HowItWorks } from "@/components/how-it-works";
+import { ForOrganizersAttendees } from "@/components/for-organizers-attendees";
+import { PoweredByArkiv } from "@/components/powered-by-arkiv";
 
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -28,43 +32,49 @@ export default function Home() {
     },
   };
   return (
-    <main className="min-h-screen bg-black flex flex-col">
+    <main className="min-h-screen flex flex-col">
       <Header />
 
 
-      <section className="relative overflow-hidden px-4 pt-32 pb-32 sm:px-6 lg:px-8 bg-black min-h-screen flex items-center justify-center">
+      <section className="relative overflow-hidden min-h-screen flex flex-col">
         {/* Dynamic Brutalist Background Elements */}
         <div className="absolute inset-0 -z-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
 
-        {/* Animated Floating Shapes */}
-        <motion.div
-          animate={{
-            rotate: 360,
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.2, 0.1]
+        {/* Video with logo clip-mask - top right, ~60% of screen */}
+        <div
+          className="absolute -top-250 right-0 w-[60vw] h-[60vh] min-h-[2800px] z-0"
+          style={{
+            maskImage: "url('/logo.svg')",
+            maskSize: "contain",
+            maskPosition: "center",
+            maskRepeat: "no-repeat",
+            WebkitMaskImage: "url('/logo.svg')",
+            WebkitMaskSize: "contain",
+            WebkitMaskPosition: "center",
+            WebkitMaskRepeat: "no-repeat",
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-20 right-[10%] -z-10 w-64 h-64 border border-primary/30 rounded-full"
-        />
+        >
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/videos/crowd-gathering.mp4" type="video/mp4" />
+          </video>
+        </div>
 
-        <motion.div
-          animate={{
-            y: [0, -40, 0],
-            rotate: [-12, -5, -12],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-20 left-[10%] -z-10 w-40 h-40 bg-secondary/10 rounded-[2rem] backdrop-blur-3xl"
-        />
-
+        {/* Hero text and description - bottom left */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="mx-auto max-w-5xl text-center relative z-10 w-full"
+          className="relative mx-auto z-10 mt-auto px-4 pb-16 pt-8 sm:px-6 lg:px-8 min-w-7xl"
         >
           <motion.h1
             variants={itemVariants}
-            className="font-malinton mb-8 text-7xl font-black leading-[0.85] tracking-tighter text-white sm:text-8xl lg:text-[9rem]"
+            className="font-malinton mb-6 text-6xl font-black leading-[0.85] tracking-tighter text-white sm:text-7xl lg:text-8xl"
           >
             SHOW UP.<br />
             <span className="text-primary italic inline-block mt-2">GET REWARDED.</span>
@@ -72,45 +82,50 @@ export default function Home() {
 
           <motion.p
             variants={itemVariants}
-            className="mx-auto mb-14 max-w-2xl text-xl text-white/60 font-medium leading-relaxed"
+            className="mb-10 text-lg text-white/60 font-medium leading-relaxed sm:text-xl max-w-xl text-left"
           >
             Clink solves the no-show problem. Check in at events, build your <strong className="text-white">on-chain reputation</strong>, and unlock better experiences. Built fully on Arkiv.
           </motion.p>
 
           <motion.div
             variants={itemVariants}
-            className="flex flex-col items-center justify-center gap-4 sm:flex-row"
+            className="flex flex-col gap-4 sm:flex-row"
           >
-            <Button size="lg" asChild className="group gap-2 h-16 px-10 text-lg bg-primary text-black hover:bg-primary/90 font-bold hover:scale-105 transition-transform active:scale-95 shadow-[0_0_30px_rgba(255,82,162,0.3)] hover:shadow-[0_0_40px_rgba(255,82,162,0.5)]">
+            <Button size="lg" asChild className="group gap-2 h-14 px-8 text-base bg-primary text-black hover:bg-primary/90 font-bold hover:scale-105 transition-transform active:scale-95 shadow-[0_0_30px_rgba(255,82,162,0.3)] hover:shadow-[0_0_40px_rgba(255,82,162,0.5)]">
               <Link href="/events/create">
                 Create an event
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1 border border-black/10 rounded-full p-0.5" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 border border-black/10 rounded-full p-0.5" />
               </Link>
             </Button>
-            <Button variant="outline" size="lg" asChild className="h-16 px-10 text-lg border-white/20 hover:bg-white/10 font-bold hover:scale-105 transition-all active:scale-95 backdrop-blur-sm">
+            <Button variant="outline" size="lg" asChild className="h-14 px-8 text-base border-white/20 hover:bg-white/10 font-bold hover:scale-105 transition-all active:scale-95 backdrop-blur-sm">
               <Link href="/events">Browse events</Link>
             </Button>
           </motion.div>
 
           <motion.div
             variants={itemVariants}
-            className="mt-24 pt-8 border-t border-white/10 flex flex-wrap items-center justify-center gap-12 text-white/40"
+            className="mt-12 pt-6 border-t border-white/10 flex flex-wrap items-center gap-8 text-white/40"
           >
             <div className="flex items-center gap-3 group hover:text-white transition-colors">
-              <div className="rounded-full bg-secondary text-black p-3 group-hover:scale-110 transition-transform">
-                <Calendar className="h-5 w-5" />
+              <div className="rounded-full bg-secondary text-black p-2.5 group-hover:scale-110 transition-transform">
+                <Calendar className="h-4 w-4" />
               </div>
               <span className="text-sm font-bold uppercase tracking-wider">Events on Arkiv</span>
             </div>
             <div className="flex items-center gap-3 group hover:text-white transition-colors">
-              <div className="rounded-full bg-primary text-black p-3 group-hover:scale-110 transition-transform">
-                <Users className="h-5 w-5" />
+              <div className="rounded-full bg-primary text-black p-2.5 group-hover:scale-110 transition-transform">
+                <Users className="h-4 w-4" />
               </div>
               <span className="text-sm font-bold uppercase tracking-wider">Verifiable attendance</span>
             </div>
           </motion.div>
         </motion.div>
       </section>
+
+      <HowItWorks />
+      <WhyClink />
+      <ForOrganizersAttendees />
+      <PoweredByArkiv />
     </main>
   );
 }

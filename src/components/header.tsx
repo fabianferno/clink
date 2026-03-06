@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers";
 import { motion } from "framer-motion";
-import { Sparkles, Wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { publicClient } from "@/lib/arkiv";
@@ -63,20 +64,20 @@ export function Header() {
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 group">
+          <Image
+            src="/android-chrome-192x192.png"
+            alt="Clink"
+            width={60}
+            height={60}
+            className="rounded-lg"
+          />
           <span className="font-malinton text-2xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
             Clink
           </span>
-          <Sparkles className="h-5 w-5 text-primary" />
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
-          <Link
-            href="/about"
-            className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
-          >
-            About
-          </Link>
           <Link
             href="/events"
             className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"

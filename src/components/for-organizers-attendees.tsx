@@ -23,7 +23,7 @@ export function ForOrganizersAttendees() {
   return (
     <section className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-6xl">
@@ -33,7 +33,7 @@ export function ForOrganizersAttendees() {
           viewport={{ once: true }}
           className="mb-16 text-center"
         >
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-emerald-500">
+          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-primary">
             Built for everyone
           </p>
           <h2 className="font-malinton mb-6 text-4xl font-bold text-foreground sm:text-5xl">
@@ -52,8 +52,8 @@ export function ForOrganizersAttendees() {
             className="rounded-2xl border border-white/5 bg-card/50 p-8 backdrop-blur"
           >
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Megaphone className="h-6 w-6 text-emerald-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Megaphone className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-malinton text-xl font-semibold text-foreground">
@@ -70,7 +70,7 @@ export function ForOrganizersAttendees() {
                   key={i}
                   className="flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   {feature}
                 </li>
               ))}
@@ -87,8 +87,8 @@ export function ForOrganizersAttendees() {
             className="rounded-2xl border border-white/5 bg-card/50 p-8 backdrop-blur"
           >
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
-                <Users className="h-6 w-6 text-amber-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/20">
+                <Users className="h-6 w-6 text-secondary" />
               </div>
               <div>
                 <h3 className="font-malinton text-xl font-semibold text-foreground">
@@ -105,7 +105,7 @@ export function ForOrganizersAttendees() {
                   key={i}
                   className="flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
                   {feature}
                 </li>
               ))}
