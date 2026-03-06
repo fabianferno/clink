@@ -16,6 +16,7 @@ import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { ExpirationTime, jsonToPayload } from "@arkiv-network/sdk/utils";
 import { mendoza } from "@arkiv-network/sdk/chains";
 import { Header } from "@/components/header";
+import ShinyText from "@/components/ui/shiny-text";
 
 const hasPrivy =
   typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
@@ -53,7 +54,9 @@ function CreateEventPageFallback() {
       <div className="mx-auto max-w-7xl px-4 pt-32">
         <Card>
           <CardHeader>
-            <h1 className="font-malinton text-2xl font-bold">Connect to create event</h1>
+            <h1 className="font-malinton text-2xl font-bold">
+              <ShinyText text="Connect to create event" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
             <p className="text-muted-foreground">
               Add NEXT_PUBLIC_PRIVY_APP_ID to your environment to enable wallet connection.
             </p>
@@ -176,7 +179,9 @@ function CreateEventPageWithPrivy() {
           <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
             <Calendar className="w-10 h-10 text-white/40" />
           </div>
-          <h1 className="font-malinton text-4xl font-black text-white mb-4">CONNECT IDENTITY</h1>
+          <h1 className="font-malinton text-4xl font-black mb-4">
+            <ShinyText text="CONNECT IDENTITY" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
           <p className="text-white/60 mb-8 font-medium">
             Connect your wallet to host an event on Clink and build your community reputation.
           </p>
@@ -201,15 +206,21 @@ function CreateEventPageWithPrivy() {
         animate={{ opacity: 1, y: 0 }}
         className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
       >
-        <Link
-          href="/events"
-          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors w-fit"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          <span>Back to Events</span>
-        </Link>
-
-        <h1 className="font-malinton mb-10 text-5xl font-black text-white">HOST EVENT</h1>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to Events</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Host Event" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Create and host events on Arkiv</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {error && (

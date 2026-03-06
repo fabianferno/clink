@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
+import ShinyText from "@/components/ui/shiny-text";
 
 const QRCode = dynamic(() => import("react-qr-code").then((m) => m.default), { ssr: false });
 import { useAuth } from "@/components/providers";
@@ -51,20 +52,28 @@ function CheckinPageNoWallet() {
   const [code] = useState(generateCheckinCode());
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black overflow-hidden flex flex-col">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 pt-24 pb-16">
-        <Link
-          href={`/events/${entityKey}`}
-          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          <span>Back to event</span>
-        </Link>
-        <div className="rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center">
-          <p className="text-muted-foreground mb-2">Check-in code (display only)</p>
-          <p className="font-mono text-4xl font-bold tracking-widest">{code}</p>
-          <p className="mt-4 text-sm text-muted-foreground">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-16 relative z-10">
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href={`/events/${entityKey}`}
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to event</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Check-in" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Verify attendance at the event</p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-8 text-center">
+          <p className="text-white/50 mb-2">Check-in code (display only)</p>
+          <p className="font-mono text-4xl font-bold tracking-widest text-white">{code}</p>
+          <p className="mt-4 text-sm text-white/50">
             Wallet not configured — code is not stored to Arkiv.
           </p>
         </div>
@@ -417,20 +426,28 @@ function CheckinPageFull() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black overflow-hidden flex flex-col">
       <Header />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-7xl px-4 pt-24 pb-16"
+        className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-16 relative z-10"
       >
-        <Link
-          href={`/events/${entityKey}`}
-          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          <span>Back to event</span>
-        </Link>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href={`/events/${entityKey}`}
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to event</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Check-in" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Verify attendance at the event</p>
+          </div>
+        </div>
 
         {isOrganizer && (
           <div className="mb-8 flex gap-2">
@@ -452,8 +469,8 @@ function CheckinPageFull() {
         {mode === "organizer" && isOrganizer ? (
           <div className="rounded-2xl border border-white/10 bg-[#141414] p-8 space-y-6">
             <div>
-              <h1 className="font-malinton text-2xl font-bold mb-1">Check-in code</h1>
-              <p className="text-muted-foreground text-sm">
+              <h2 className="font-malinton text-xl font-bold mb-1 text-white">Check-in code</h2>
+              <p className="text-white/50 text-sm">
                 Publish this code to Arkiv, then share the QR or code with attendees. Check-in opens 15 min before the event and closes 1 hour after start.
               </p>
             </div>
@@ -522,8 +539,8 @@ function CheckinPageFull() {
         ) : (
           <div className="rounded-2xl border border-white/10 bg-[#141414] p-8 space-y-6">
             <div>
-              <h1 className="font-malinton text-2xl font-bold mb-1">Check in</h1>
-              <p className="text-muted-foreground text-sm">
+              <h2 className="font-malinton text-xl font-bold mb-1 text-white">Check in</h2>
+              <p className="text-white/50 text-sm">
                 Enter the 6-character code from the organizer.
               </p>
             </div>
@@ -532,7 +549,7 @@ function CheckinPageFull() {
               <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-8 text-center">
                 <p className="text-4xl mb-3">🎉</p>
                 <p className="text-green-400 font-bold text-lg">Checked in!</p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-white/50 mt-2">
                   Your attendance proof has been recorded on Arkiv.
                 </p>
               </div>
@@ -560,7 +577,7 @@ function CheckinPageFull() {
                 </Button>
 
                 {!authenticated && (
-                  <p className="text-center text-sm text-muted-foreground">
+                  <p className="text-center text-sm text-white/50">
                     You&apos;ll be asked to connect your wallet.
                   </p>
                 )}

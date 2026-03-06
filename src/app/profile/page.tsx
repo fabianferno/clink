@@ -16,6 +16,7 @@ import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { eq } from "@arkiv-network/sdk/query";
 import { ExpirationTime, jsonToPayload } from "@arkiv-network/sdk/utils";
 import { mendoza } from "@arkiv-network/sdk/chains";
+import ShinyText from "@/components/ui/shiny-text";
 
 const hasPrivy =
   typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
@@ -114,16 +115,21 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
         <Header />
         <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10 animate-pulse">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-white text-2xl font-bold flex items-center gap-2">
-              Profile <span className="text-secondary">✦</span>
-            </h1>
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h1 className="font-malinton text-4xl md:text-5xl font-black">
+                <ShinyText text="Profile" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+              </h1>
+              <p className="text-white/50 mt-2">Your Clink identity and show-up record</p>
+            </div>
           </div>
           <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col border border-white/5 shadow-2xl overflow-hidden relative min-h-[500px]">
-            <div className="p-6 pb-2 w-full flex flex-col items-center">
-              <div className="w-32 h-32 rounded-[1.5rem] bg-white/10 mb-6" />
-              <div className="h-10 w-48 bg-white/10 rounded-lg mb-4" />
-              <div className="h-6 w-32 bg-white/5 rounded-full" />
+            <div className="p-6 pb-2 w-full flex flex-row items-start gap-6">
+              <div className="w-32 h-32 rounded-[1.5rem] bg-white/10 shrink-0" />
+              <div className="flex-1 flex flex-col gap-2">
+                <div className="h-10 w-48 bg-white/10 rounded-lg" />
+                <div className="h-6 w-32 bg-white/5 rounded-full" />
+              </div>
             </div>
             <div className="w-full relative py-6">
               <div className="absolute w-8 h-8 rounded-full bg-black -left-4 top-1/2 -translate-y-1/2 z-10" />
@@ -152,7 +158,9 @@ export default function ProfilePage() {
           <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
             <User className="w-10 h-10 text-white/40" />
           </div>
-          <h1 className="font-malinton text-4xl font-black text-white mb-4">CONNECT IDENTITY</h1>
+          <h1 className="font-malinton text-4xl font-black mb-4">
+            <ShinyText text="CONNECT IDENTITY" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
           <p className="text-white/60 mb-8 font-medium">
             Your Clink Score and attendance history appear here after you connect. Built fully on Arkiv.
           </p>
@@ -174,43 +182,44 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
       <Header />
 
-      <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-secondary/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-full max-w-lg h-[400px] bg-primary/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/3 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10"
       >
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-white text-2xl font-bold flex items-center gap-2">
-            Profile <span className="text-secondary">✦</span>
-          </h1>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Profile" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Your Clink identity and show-up record</p>
+          </div>
         </div>
 
         {/* Identity Ticket Layout */}
         <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col border border-white/5 shadow-2xl overflow-hidden relative">
           {/* Avatar Area */}
-          <div className="p-6 pb-2 w-full flex flex-col items-center">
-            <div className="w-32 h-32 rounded-[1.5rem] overflow-hidden border-2 border-white/10 relative mb-6 shrink-0 bg-black">
+          <div className="p-6 pb-2 w-full flex flex-row items-start gap-6">
+            <div className="w-32 h-32 rounded-[1.5rem] overflow-hidden border-2 border-white/10 relative shrink-0 bg-black">
               <PatternGraphic
                 seed={walletAddress}
                 variant="pink"
                 className="scale-150 transform origin-center"
               />
             </div>
-            <div className="w-full max-w-[320px] flex flex-col items-center gap-2">
+            <div className="flex-1 min-w-0 flex flex-col gap-3">
               {isEditingName && hasPrivy && profile ? (
                 <div className="flex flex-col gap-2 w-full">
                   <Input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value.slice(0, 32))}
                     placeholder="Your display name"
-                    className="text-center font-malinton text-xl bg-white/5 border-white/20 text-white"
+                    className="font-malinton text-xl bg-white/5 border-white/20 text-white"
                     maxLength={32}
                     autoFocus
                   />
-                  {saveNameError && <p className="text-xs text-red-400 text-center">{saveNameError}</p>}
+                  {saveNameError && <p className="text-xs text-red-400">{saveNameError}</p>}
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -270,8 +279,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h2 className="font-malinton text-4xl font-bold text-white leading-tight text-center break-all">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-malinton text-4xl font-bold text-white leading-tight">
                     {profile?.displayName ?? displayName}
                   </h2>
                   {hasPrivy && profile && (
@@ -280,7 +289,7 @@ export default function ProfilePage() {
                         setEditName(profile.displayName);
                         setIsEditingName(true);
                       }}
-                      className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                      className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors shrink-0"
                       aria-label="Edit display name"
                     >
                       <Pencil className="h-4 w-4" />
@@ -288,39 +297,39 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full max-w-[400px]">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-0.5" />
-              <p className="text-white/80 text-xs font-mono break-all flex-1 select-all">
-                {walletAddress}
-              </p>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(walletAddress);
-                      setAddressCopied(true);
-                      setTimeout(() => setAddressCopied(false), 2000);
-                    } catch {
-                      // fallback for older browsers
-                    }
-                  }}
-                  className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                  aria-label="Copy address"
-                  title="Copy address"
-                >
-                  {addressCopied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                </button>
-                <a
-                  href={`https://explorer.mendoza.hoodi.arkiv.network/address/${walletAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                  aria-label="View on Arkiv Explorer"
-                  title="View on Arkiv Explorer"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full min-w-0">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-white/80 text-xs font-mono break-all flex-1 min-w-0 select-all">
+                  {walletAddress}
+                </p>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(walletAddress);
+                        setAddressCopied(true);
+                        setTimeout(() => setAddressCopied(false), 2000);
+                      } catch {
+                        // fallback for older browsers
+                      }
+                    }}
+                    className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                    aria-label="Copy address"
+                    title="Copy address"
+                  >
+                    {addressCopied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                  <a
+                    href={`https://explorer.mendoza.hoodi.arkiv.network/address/${walletAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                    aria-label="View on Arkiv Explorer"
+                    title="View on Arkiv Explorer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -352,10 +361,10 @@ export default function ProfilePage() {
                   </span>
                   <Badge
                     className={`h-6 font-bold uppercase tracking-widest text-[10px] border ${clinkScore >= 80
-                        ? "bg-green-500/20 text-green-400 border-green-500/30"
-                        : clinkScore >= 50
-                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                          : "bg-red-500/20 text-red-400 border-red-500/30"
+                      ? "bg-green-500/20 text-green-400 border-green-500/30"
+                      : clinkScore >= 50
+                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                        : "bg-red-500/20 text-red-400 border-red-500/30"
                       }`}
                   >
                     {clinkScore >= 80 ? "Reliable" : clinkScore >= 50 ? "Average" : "Risky"}

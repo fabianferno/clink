@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/header";
+import ShinyText from "@/components/ui/shiny-text";
 import { publicClient } from "@/lib/arkiv";
 import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { eq } from "@arkiv-network/sdk/query";
@@ -179,7 +180,9 @@ function EditEventPageContent() {
       <div className="min-h-screen bg-black flex flex-col">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-7xl w-full text-center">
-          <h1 className="font-malinton text-4xl font-black text-white mb-4">Connect to edit</h1>
+          <h1 className="font-malinton text-4xl font-black mb-4">
+            <ShinyText text="Connect to edit" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
           <p className="text-white/60 mb-8">Connect your wallet to edit this event.</p>
           <Button onClick={login} size="lg" className="bg-primary text-black hover:bg-primary/90 font-bold">
             Connect Wallet
@@ -232,15 +235,21 @@ function EditEventPageContent() {
         animate={{ opacity: 1, y: 0 }}
         className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 relative z-10"
       >
-        <Link
-          href={`/events/${entityKey}`}
-          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          <span>Back to event</span>
-        </Link>
-
-        <h1 className="font-malinton mb-10 text-4xl font-black text-white">Edit Event</h1>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href={`/events/${entityKey}`}
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to event</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Edit Event" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Update your event details</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {error && (

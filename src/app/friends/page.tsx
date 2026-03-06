@@ -8,6 +8,7 @@ import {
     QrCode, ScanLine, Ghost, Users, Loader2, Check, X, RefreshCw
 } from "lucide-react";
 import { Header } from "@/components/header";
+import ShinyText from "@/components/ui/shiny-text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PatternGraphic } from "@/components/ui/pattern-graphic";
@@ -33,6 +34,42 @@ const hasPrivy =
     typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
     process.env.NEXT_PUBLIC_PRIVY_APP_ID !== "placeholder" &&
     process.env.NEXT_PUBLIC_PRIVY_APP_ID.length >= 10;
+
+const FRIENDS_CACHE_KEY = "clink-friends-cache";
+
+interface FriendsCache {
+    walletAddress: string;
+    friends: FriendNode[];
+    friendEvents: FriendEvent[];
+    pendingRequests: PendingRequest[];
+    outgoingClinks: OutgoingClink[];
+    timestamp: number;
+}
+
+function loadFriendsCache(walletAddress: string): FriendsCache | null {
+    if (typeof window === "undefined") return null;
+    try {
+        const raw = localStorage.getItem(`${FRIENDS_CACHE_KEY}-${walletAddress.toLowerCase()}`);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as FriendsCache;
+        if (parsed.walletAddress?.toLowerCase() !== walletAddress.toLowerCase()) return null;
+        return parsed;
+    } catch {
+        return null;
+    }
+}
+
+function saveFriendsCache(cache: FriendsCache): void {
+    if (typeof window === "undefined") return;
+    try {
+        localStorage.setItem(
+            `${FRIENDS_CACHE_KEY}-${cache.walletAddress.toLowerCase()}`,
+            JSON.stringify(cache)
+        );
+    } catch {
+        /* ignore */
+    }
+}
 
 export interface FriendNode {
     id: string;
@@ -100,6 +137,7 @@ function FriendsPageFull() {
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
     const [outgoingClinks, setOutgoingClinks] = useState<OutgoingClink[]>([]);
     const [loadingFriends, setLoadingFriends] = useState(true);
+    const [refreshingInBackground, setRefreshingInBackground] = useState(false);
 
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
@@ -174,9 +212,13 @@ function FriendsPageFull() {
     }, []);
 
     // ─── Load friends from Arkiv ───────────────────────────────────────────
-    const loadFriendsData = useCallback(async () => {
+    const loadFriendsData = useCallback(async (isBackgroundRefresh = false) => {
         if (!walletAddress) return;
-        setLoadingFriends(true);
+        if (isBackgroundRefresh) {
+            setRefreshingInBackground(true);
+        } else {
+            setLoadingFriends(true);
+        }
 
         try {
             // 1. Fetch all confirmed clinks involving me
@@ -431,6 +473,16 @@ function FriendsPageFull() {
             eventList.sort((a, b) => a.timestamp - b.timestamp);
             setFriendEvents(eventList);
 
+            // Save to cache for instant load on next visit
+            saveFriendsCache({
+                walletAddress,
+                friends: friendDataList,
+                friendEvents: eventList,
+                pendingRequests: pendingWithNames,
+                outgoingClinks: outgoingWithNames,
+                timestamp: Date.now(),
+            });
+
             // Build graph
             buildGraph(friendDataList, walletAddress);
         } catch (err) {
@@ -439,14 +491,26 @@ function FriendsPageFull() {
             buildGraph([], walletAddress);
         } finally {
             setLoadingFriends(false);
+            setRefreshingInBackground(false);
         }
     }, [walletAddress, buildGraph]);
 
+    // Hydrate from cache immediately, then refresh in background
     useEffect(() => {
-        if (authenticated && walletAddress) {
-            loadFriendsData();
+        if (!authenticated || !walletAddress) return;
+
+        const cached = loadFriendsCache(walletAddress);
+        const hasCache = !!(cached?.friends?.length);
+        if (hasCache) {
+            setFriends(cached!.friends);
+            setFriendEvents(cached!.friendEvents);
+            setPendingRequests(cached!.pendingRequests);
+            setOutgoingClinks(cached!.outgoingClinks);
+            buildGraph(cached!.friends, walletAddress);
         }
-    }, [authenticated, walletAddress, loadFriendsData]);
+
+        loadFriendsData(hasCache);
+    }, [authenticated, walletAddress, loadFriendsData, buildGraph]);
 
     // ─── QR scan handler ──────────────────────────────────────────────────
     const handleQrScan = async (results: IDetectedBarcode[]) => {
@@ -577,8 +641,13 @@ function FriendsPageFull() {
                 className="flex-1 mt-5 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="font-malinton text-4xl font-black text-white">Friends</h1>
+                <div className="flex items-center justify-between mb-10">
+                    <div>
+                      <h1 className="font-malinton text-4xl md:text-5xl font-black">
+                        <ShinyText text="Friends" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+                      </h1>
+                      <p className="text-white/50 mt-2">Your network and connections</p>
+                    </div>
                     <button
                         onClick={() => setIsIncognito(!isIncognito)}
                         className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full pl-3 pr-1 py-1 hover:bg-white/10 transition-colors cursor-pointer"
@@ -641,16 +710,21 @@ function FriendsPageFull() {
                                             <span className="text-white/30 text-sm">Loading...</span>
                                         </div>
                                     ) : (
-                                        <p className="text-white text-xl font-black">{friends.length} Connection{friends.length !== 1 ? 's' : ''}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-white text-xl font-black">{friends.length} Connection{friends.length !== 1 ? 's' : ''}</p>
+                                            {refreshingInBackground && (
+                                                <span className="text-white/30 text-[10px] font-medium uppercase tracking-wider">Updating</span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 
                                 <div className="absolute top-4 right-4 z-10 flex gap-2">
                                     <button
-                                        onClick={loadFriendsData}
+                                        onClick={() => loadFriendsData(false)}
                                         className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/5 cursor-pointer"
                                     >
-                                        <RefreshCw className={`w-3.5 h-3.5 text-white ${loadingFriends ? 'animate-spin' : ''}`} />
+                                        <RefreshCw className={`w-3.5 h-3.5 text-white ${loadingFriends || refreshingInBackground ? 'animate-spin' : ''}`} />
                                     </button>
                                 </div>
 
@@ -1000,9 +1074,12 @@ function LoadingScreen() {
         <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
             <Header />
             <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10 animate-pulse">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="h-10 w-40 bg-white/10 rounded-lg" />
-                    <div className="h-8 w-24 bg-white/10 rounded-full" />
+                <div className="flex items-center justify-between mb-10">
+                    <div>
+                      <div className="h-12 w-48 bg-white/10 rounded-lg mb-2" />
+                      <div className="h-5 w-64 bg-white/5 rounded" />
+                    </div>
+                    <div className="h-10 w-24 bg-white/10 rounded-full" />
                 </div>
                 <div className="flex flex-col gap-8">
                     <div className="bg-[#141414] border border-white/5 rounded-3xl p-6 h-[350px] relative">
@@ -1039,7 +1116,9 @@ function ConnectScreen({ onLogin }: { onLogin: () => void }) {
                 <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
                     <Users className="w-10 h-10 text-white/40" />
                 </div>
-                <h1 className="font-malinton text-4xl font-black text-white mb-4">CONNECT IDENTITY</h1>
+                <h1 className="font-malinton text-4xl font-black mb-4">
+                  <ShinyText text="CONNECT IDENTITY" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+                </h1>
                 <p className="text-white/60 mb-8 font-medium">
                     Connect your wallet to find your friends, see where they&apos;re going, and build your social graph.
                 </p>

@@ -11,6 +11,7 @@ import { Header } from "@/components/header";
 import { publicClient } from "@/lib/arkiv";
 import { eq } from "@arkiv-network/sdk/query";
 import { PatternGraphic } from "@/components/ui/pattern-graphic";
+import ShinyText from "@/components/ui/shiny-text";
 
 const hasPrivy =
   typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
@@ -147,7 +148,9 @@ function MyEventsContent() {
       <div className="min-h-screen bg-black">
         <Header />
         <div className="mx-auto max-w-7xl px-4 pt-32 text-center">
-          <h1 className="font-malinton text-2xl font-bold mb-4">My Events</h1>
+          <h1 className="font-malinton text-2xl font-bold mb-4">
+            <ShinyText text="My Events" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
           <p className="text-muted-foreground">Wallet connection is required.</p>
         </div>
       </div>
@@ -178,7 +181,9 @@ function MyEventsContent() {
           <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
             <Settings className="w-10 h-10 text-white/40" />
           </div>
-          <h1 className="font-malinton text-4xl font-black text-white mb-4">MY EVENTS</h1>
+          <h1 className="font-malinton text-4xl font-black mb-4">
+            <ShinyText text="MY EVENTS" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
           <p className="text-white/60 mb-8 font-medium">
             Connect your wallet to view and manage events you&apos;ve created.
           </p>
@@ -200,7 +205,6 @@ function MyEventsContent() {
   return (
     <div className="min-h-screen bg-black overflow-hidden flex flex-col">
       <Header />
-      <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-primary/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -216,7 +220,9 @@ function MyEventsContent() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
               <span>Back to Events</span>
             </Link>
-            <h1 className="font-malinton text-4xl md:text-5xl font-black text-white">My Events</h1>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="My Events" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
             <p className="text-white/50 mt-2">Manage events you&apos;ve created</p>
           </div>
           <div className="flex items-center gap-2">

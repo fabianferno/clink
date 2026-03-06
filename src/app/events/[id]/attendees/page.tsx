@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/header";
+import ShinyText from "@/components/ui/shiny-text";
 import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
 import { publicClient } from "@/lib/arkiv";
@@ -286,28 +287,38 @@ export default function AttendeesPage() {
   }, [entityKey]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black overflow-hidden flex flex-col">
       <Header />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-7xl px-4 pt-24 pb-16"
+        className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-16 relative z-10"
       >
-        <Link
-          href={`/events/${entityKey}`}
-          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          <span>Back to event</span>
-        </Link>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href={`/events/${entityKey}`}
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to event</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Attendees" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">
+              {!loading ? `${attendees.length} ${attendees.length === 1 ? "person" : "people"} attending` : "Loading attendees..."}
+            </p>
+          </div>
+        </div>
 
         <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden">
           <div className="p-6 border-b border-white/10 flex items-center justify-between">
-            <h1 className="font-malinton text-2xl font-bold flex items-center gap-2">
+            <h2 className="font-malinton text-xl font-bold flex items-center gap-2 text-white">
               <Users className="h-5 w-5 text-primary" />
-              Attendees
-            </h1>
-            <p className="text-muted-foreground text-sm">
+              Attendee list
+            </h2>
+            <p className="text-white/50 text-sm">
               {!loading && `${attendees.length} ${attendees.length === 1 ? "person" : "people"} attending`}
             </p>
           </div>
@@ -329,9 +340,9 @@ export default function AttendeesPage() {
             </ul>
           ) : attendees.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
-              <Users className="mb-4 h-12 w-12 text-muted-foreground/30" />
-              <p className="text-muted-foreground">No one has checked in yet.</p>
-              <p className="mt-2 text-sm text-muted-foreground/60">
+              <Users className="mb-4 h-12 w-12 text-white/20" />
+              <p className="text-white/80">No one has checked in yet.</p>
+              <p className="mt-2 text-sm text-white/50">
                 Once attendees check in, they&apos;ll appear here.
               </p>
             </div>

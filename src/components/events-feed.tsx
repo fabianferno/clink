@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PatternGraphic } from "@/components/ui/pattern-graphic";
 import { cn } from "@/lib/utils";
 import { publicClient } from "@/lib/arkiv";
+import ShinyText from "@/components/ui/shiny-text";
 import { eq, gt } from "@arkiv-network/sdk/query";
 import { useEffect, useState, useCallback } from "react";
 
@@ -119,84 +120,101 @@ export function EventsFeed() {
 
   if (loading) {
     return (
-      <section id="events" className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="font-malinton text-center text-3xl font-bold text-foreground sm:text-left"
+      <section id="events" className="w-full">
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <Link
+              href="/events/my-events"
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
             >
-              Upcoming events
-            </motion.h2>
-            <Button variant="outline" size="sm" disabled className="gap-2 shrink-0">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>My Events</span>
+            </Link>
+            <h1 className="font-malinton text-4xl md:text-5xl font-black">
+              <ShinyText text="Events" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+            </h1>
+            <p className="text-white/50 mt-2">Discover and RSVP to events on Arkiv</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-white/20 text-white hover:bg-white/10">
               <RefreshCw className="h-4 w-4 animate-spin" />
               Refresh
             </Button>
+            <Button asChild size="sm" className="bg-primary text-black hover:bg-primary/90 font-bold">
+              <Link href="/events/create">Create Event</Link>
+            </Button>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse h-[400px] bg-card border-white/10 flex flex-col p-2 rounded-[1.5rem]">
-                <div className="relative aspect-[4/3] w-full rounded-[1rem] bg-white/5 mb-4" />
-                <div className="flex flex-col flex-1 px-2 pb-2">
-                  <div className="h-6 w-3/4 rounded bg-white/10 mb-2" />
-                  <div className="h-4 w-full rounded bg-white/5 mb-2" />
-                  <div className="h-4 w-5/6 rounded bg-white/5 mb-4" />
-                  <div className="mt-auto space-y-2 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between">
-                      <div className="h-3 w-1/3 rounded bg-white/10" />
-                      <div className="h-3 w-1/4 rounded bg-white/10" />
-                    </div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse h-[400px] bg-card border-white/10 flex flex-col p-2 rounded-[1.5rem]">
+              <div className="relative aspect-[4/3] w-full rounded-[1rem] bg-white/5 mb-4" />
+              <div className="flex flex-col flex-1 px-2 pb-2">
+                <div className="h-6 w-3/4 rounded bg-white/10 mb-2" />
+                <div className="h-4 w-full rounded bg-white/5 mb-2" />
+                <div className="h-4 w-5/6 rounded bg-white/5 mb-4" />
+                <div className="mt-auto space-y-2 pt-4 border-t border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-1/3 rounded bg-white/10" />
+                    <div className="h-3 w-1/4 rounded bg-white/10" />
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
+              </div>
+            </Card>
+          ))}
         </div>
       </section>
     );
   }
 
   return (
-    <section id="events" className="px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-malinton text-center text-3xl font-bold text-foreground sm:text-left"
+    <section id="events" className="w-full">
+      <div className="flex items-center justify-between mb-10">
+        <div>
+          <Link
+            href="/events/my-events"
+            className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors mb-4"
           >
-            Upcoming events
-          </motion.h2>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            <span>My Events</span>
+          </Link>
+          <h1 className="font-malinton text-4xl md:text-5xl font-black">
+            <ShinyText text="Events" color="#FF52A2" shineColor="#ffffff" speed={2.5} spread={150} />
+          </h1>
+          <p className="text-white/50 mt-2">Discover and RSVP to events on Arkiv</p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => fetchEvents()}
             disabled={loading}
-            className="gap-2 shrink-0"
+            className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
+          <Button asChild size="sm" className="bg-primary text-black hover:bg-primary/90 font-bold">
+            <Link href="/events/create">Create Event</Link>
+          </Button>
         </div>
+      </div>
 
         {events.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/20 px-8 py-16 text-center"
+            className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-8 py-16 text-center"
           >
-            <p className="mb-4 text-muted-foreground">No upcoming events yet.</p>
-            <p className="mb-6 text-sm text-muted-foreground/80">
+            <p className="mb-4 text-white/80">No upcoming events yet.</p>
+            <p className="mb-6 text-sm text-white/50">
               Only events with a future date/time are shown. If you just created an event, try refreshing or check that the event date is in the future.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="border-white/20 text-white hover:bg-white/10">
                 <Link href="/events/create">Create the first event</Link>
               </Button>
-              <Button onClick={() => fetchEvents()} variant="secondary" className="gap-2">
+              <Button onClick={() => fetchEvents()} variant="secondary" className="gap-2 bg-white/10 text-white hover:bg-white/20">
                 <RefreshCw className="h-4 w-4" />
                 Refresh
               </Button>
@@ -295,7 +313,6 @@ export function EventsFeed() {
             })}
           </div>
         )}
-      </div>
     </section>
   );
 }

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ShinyText from "@/components/ui/shiny-text";
 
 
 export default function Home() {
@@ -79,7 +80,14 @@ export default function Home() {
             className="font-malinton mb-6 text-6xl font-black leading-[0.85] tracking-tighter text-white sm:text-7xl lg:text-8xl"
           >
             SHOW UP.<br />
-            <span className="text-primary italic inline-block mt-2">GET REWARDED.</span>
+            <ShinyText
+              text="GET REWARDED."
+              color="#FF52A2"
+              shineColor="#ffffff"
+              className="italic mt-2"
+              speed={2.5}
+              spread={150}
+            />
           </motion.h1>
 
           <motion.p

@@ -454,7 +454,6 @@ export default function EventDetailPage() {
     <div className="min-h-screen bg-black overflow-hidden flex flex-col">
       <Header />
 
-      <div className="absolute top-0 right-0 w-full max-w-lg h-[500px] bg-primary/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}

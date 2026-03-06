@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import ShinyText from "@/components/ui/shiny-text";
 
 const differentiators = [
   {
@@ -230,9 +231,13 @@ export function WhyClink() {
           <h2 className="font-malinton mb-6 text-3xl font-bold text-foreground">
             Not another event platform.
             <br />
-            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              A new paradigm.
-            </span>
+            <ShinyText
+              text="A new paradigm."
+              color="#FF52A2"
+              shineColor="#ffffff"
+              speed={2.5}
+              spread={150}
+            />
           </h2>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground">
             Luma, Eventbrite, and Meetup are great — but they own your data. Clink is
@@ -273,9 +278,13 @@ export function WhyClink() {
           <h2 className="font-malinton mb-6 text-4xl font-bold text-foreground sm:text-5xl">
             Not another event platform.
             <br />
-            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              A new paradigm.
-            </span>
+            <ShinyText
+              text="A new paradigm."
+              color="#FF52A2"
+              shineColor="#ffffff"
+              speed={2.5}
+              spread={150}
+            />
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Luma, Eventbrite, and Meetup are great — but they own your data. Clink is
