@@ -62,6 +62,13 @@ interface PendingRequest {
     timestamp: number;
 }
 
+interface OutgoingClink {
+    receiverAddress: string;
+    receiverDisplay: string;
+    eventTitle: string;
+    timestamp: number;
+}
+
 export default function FriendsPage() {
     if (!hasPrivy) return <FriendsPageLite />;
     return <FriendsPageFull />;
@@ -91,6 +98,7 @@ function FriendsPageFull() {
     const [friends, setFriends] = useState<FriendNode[]>([]);
     const [friendEvents, setFriendEvents] = useState<FriendEvent[]>([]);
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+    const [outgoingClinks, setOutgoingClinks] = useState<OutgoingClink[]>([]);
     const [loadingFriends, setLoadingFriends] = useState(true);
 
     const [nodes, setNodes] = useState<Node[]>([]);
@@ -192,6 +200,40 @@ function FriendsPageFull() {
                 .limit(50)
                 .fetch();
 
+            // 2b. Fetch outgoing pending clinks (I am the initiator)
+            const outgoingQ = publicClient.buildQuery();
+            const outgoingResult = await outgoingQ
+                .where(eq("type", "clink"))
+                .where(eq("status", "pending"))
+                .where(eq("initiator", walletAddress))
+                .withPayload(true)
+                .limit(50)
+                .fetch();
+
+            const outgoingWithNames = await Promise.all(
+                outgoingResult.entities.map(async (e) => {
+                    const pd = e.toJson() as Record<string, unknown>;
+                    const receiver = (pd.receiver as string) || "";
+                    let display = receiver ? `${receiver.slice(0, 6)}...${receiver.slice(-4)}` : "Unknown";
+                    try {
+                        const profQ = publicClient.buildQuery();
+                        const profRes = await profQ.where(eq("type", "profile")).where(eq("address", receiver)).withPayload(true).limit(1).fetch();
+                        if (profRes.entities.length > 0) {
+                            const pj = profRes.entities[0].toJson() as Record<string, unknown>;
+                            const dn = pj.displayName as string | undefined;
+                            if (dn && dn.trim()) display = dn.trim();
+                        }
+                    } catch { /* use truncated */ }
+                    return {
+                        receiverAddress: receiver,
+                        receiverDisplay: display,
+                        eventTitle: (pd.eventTitle as string) || "an event",
+                        timestamp: (pd.timestamp as number) || 0,
+                    };
+                })
+            );
+            setOutgoingClinks(outgoingWithNames);
+
             // 3. Build unique confirmed friend addresses
             const seenAddresses = new Set<string>();
             const friendAddresses: string[] = [];
@@ -206,21 +248,37 @@ function FriendsPageFull() {
                 }
             }
 
-            // 4. Build pending requests list (filter out already-friends)
-            const pending: PendingRequest[] = pendingResult.entities
-                .map(e => {
-                    const pd = e.toJson() as Record<string, unknown>;
-                    const initiator = pd.initiator as string || "";
-                    return {
-                        entityKey: e.key,
-                        initiatorAddress: initiator,
-                        initiatorDisplay: initiator ? `${initiator.slice(0, 6)}...${initiator.slice(-4)}` : "Unknown",
-                        eventTitle: pd.eventTitle as string || "an event",
-                        timestamp: pd.timestamp as number || 0,
-                    };
-                })
-                .filter(r => !seenAddresses.has(r.initiatorAddress.toLowerCase()));
-            setPendingRequests(pending);
+            // 4. Build pending requests list (filter out already-friends), with profile display names
+            const pendingWithNames = await Promise.all(
+                pendingResult.entities
+                    .filter((e) => {
+                        const pd = e.toJson() as Record<string, unknown>;
+                        const initiator = ((pd.initiator as string) || "").toLowerCase();
+                        return !seenAddresses.has(initiator);
+                    })
+                    .map(async (e) => {
+                        const pd = e.toJson() as Record<string, unknown>;
+                        const initiator = pd.initiator as string || "";
+                        let display = initiator ? `${initiator.slice(0, 6)}...${initiator.slice(-4)}` : "Unknown";
+                        try {
+                            const profQ = publicClient.buildQuery();
+                            const profRes = await profQ.where(eq("type", "profile")).where(eq("address", initiator)).withPayload(true).limit(1).fetch();
+                            if (profRes.entities.length > 0) {
+                                const pj = profRes.entities[0].toJson() as Record<string, unknown>;
+                                const dn = pj.displayName as string | undefined;
+                                if (dn && dn.trim()) display = dn.trim();
+                            }
+                        } catch { /* use truncated */ }
+                        return {
+                            entityKey: e.key,
+                            initiatorAddress: initiator,
+                            initiatorDisplay: display,
+                            eventTitle: pd.eventTitle as string || "an event",
+                            timestamp: pd.timestamp as number || 0,
+                        };
+                    })
+            );
+            setPendingRequests(pendingWithNames);
 
             // 5. Fetch my checked-in RSVPs for shared events calculation
             const myRsvpQ = publicClient.buildQuery();
@@ -285,10 +343,20 @@ function FriendsPageFull() {
                             if (top) topCommunity = top[0];
                         } catch { /* use default */ }
 
+                        let displayName = `${friendAddr.slice(0, 6)}...${friendAddr.slice(-4)}`;
+                        try {
+                            const profQ = publicClient.buildQuery();
+                            const profRes = await profQ.where(eq("type", "profile")).where(eq("address", friendAddr)).withPayload(true).limit(1).fetch();
+                            if (profRes.entities.length > 0) {
+                                const pj = profRes.entities[0].toJson() as Record<string, unknown>;
+                                const dn = pj.displayName as string | undefined;
+                                if (dn && dn.trim()) displayName = dn.trim();
+                            }
+                        } catch { /* use truncated */ }
                         return {
                             id: friendAddr,
                             address: friendAddr,
-                            displayName: `${friendAddr.slice(0, 6)}...${friendAddr.slice(-4)}`,
+                            displayName,
                             isAttending,
                             topCommunity,
                             sharedEvents: Math.max(sharedEvents, 1),
@@ -506,14 +574,14 @@ function FriendsPageFull() {
             <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
+                className="flex-1 mt-5 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="font-malinton text-4xl font-black text-white">NETWORK</h1>
+                    <h1 className="font-malinton text-4xl font-black text-white">Friends</h1>
                     <button
                         onClick={() => setIsIncognito(!isIncognito)}
-                        className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full pl-3 pr-1 py-1 hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full pl-3 pr-1 py-1 hover:bg-white/10 transition-colors cursor-pointer"
                     >
                         <span className="text-[10px] font-bold tracking-widest uppercase text-white/60">
                             {isIncognito ? "Ghost Mode" : "Public"}
@@ -580,7 +648,7 @@ function FriendsPageFull() {
                                 <div className="absolute top-4 right-4 z-10 flex gap-2">
                                     <button
                                         onClick={loadFriendsData}
-                                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/5"
+                                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/5 cursor-pointer"
                                     >
                                         <RefreshCw className={`w-3.5 h-3.5 text-white ${loadingFriends ? 'animate-spin' : ''}`} />
                                     </button>
@@ -591,11 +659,14 @@ function FriendsPageFull() {
                                         nodes={nodes}
                                         edges={edges}
                                         nodeTypes={{
-                                            userNode: ({ data }: { data: { userAddress: string } }) => (
-                                                <div className="w-16 h-16 rounded-full overflow-hidden border-[3px] border-primary bg-black shadow-[0_0_30px_rgba(255,82,162,0.6)] relative">
+                                            userNode: ({ data }: { data: { userAddress: string; label: string } }) => (
+                                                <div className="flex flex-col items-center gap-1">
                                                     <Handle type="source" position={Position.Top} className="opacity-0 w-1 h-1" />
                                                     <Handle type="target" position={Position.Bottom} className="opacity-0 w-1 h-1" />
-                                                    <PatternGraphic seed={data.userAddress} variant="pink" />
+                                                    <div className="w-16 h-16 rounded-full overflow-hidden border-[3px] border-primary bg-black shadow-[0_0_30px_rgba(255,82,162,0.6)] relative">
+                                                        <PatternGraphic seed={data.userAddress} variant="pink" />
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-white/80 whitespace-nowrap">{data.label}</span>
                                                 </div>
                                             ),
                                             friendNode: ({ data }: { data: { friend: FriendNode; setSelectedFriend: (f: FriendNode) => void; allFriends: FriendNode[] } }) => {
@@ -606,17 +677,20 @@ function FriendsPageFull() {
                                                 const avatarScale = 1 + strengthRatio * 0.3;
                                                 return (
                                                     <div
-                                                        className="relative cursor-pointer hover:z-50 group"
+                                                        className="relative cursor-pointer hover:z-50 group flex flex-col items-center gap-1"
                                                         style={{ transform: `scale(${avatarScale})` }}
                                                         onClick={(e) => { e.stopPropagation(); data.setSelectedFriend(friend); }}
                                                     >
                                                         <Handle type="target" position={Position.Top} className="opacity-0 w-1 h-1" />
-                                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-black group-hover:border-primary/80 group-hover:shadow-[0_0_20px_rgba(255,82,162,0.4)] transition-all">
-                                                            <PatternGraphic seed={friend.address} variant="beige" />
+                                                        <div className="relative">
+                                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-black group-hover:border-primary/80 group-hover:shadow-[0_0_20px_rgba(255,82,162,0.4)] transition-all">
+                                                                <PatternGraphic seed={friend.address} variant="beige" />
+                                                            </div>
+                                                            {friend.isAttending > 0 && (
+                                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-[3px] border-[#141414] shadow-[0_0_10px_rgba(255,82,162,1)]" />
+                                                            )}
                                                         </div>
-                                                        {friend.isAttending > 0 && (
-                                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-[3px] border-[#141414] shadow-[0_0_10px_rgba(255,82,162,1)]" />
-                                                        )}
+                                                        <span className="text-[10px] font-bold text-white/80 whitespace-nowrap max-w-[80px] truncate">{friend.displayName}</span>
                                                     </div>
                                                 );
                                             }
@@ -631,20 +705,21 @@ function FriendsPageFull() {
                                 </div>
 
                                 {!loadingFriends && friends.length === 0 && (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                                        <Users className="w-12 h-12 text-white/10 mb-3" />
-                                        <p className="text-white/30 text-sm font-medium">No connections yet</p>
-                                        <p className="text-white/20 text-xs mt-1">Clink with people at events or scan a QR code</p>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-16 text-center pointer-events-none">
+                                        <Users className="w-12 h-12 text-white/20 mb-4 shrink-0" />
+                                        <p className="text-white/50 text-sm font-medium">No connections yet</p>
+                                        <p className="text-white/40 text-xs mt-1">Clink with people at events or scan a QR code</p>
                                     </div>
                                 )}
                             </div>
 
-                            {/* ── Pending Requests ── */}
+                            {/* ── Pending Requests (incoming) ── */}
                             {pendingRequests.length > 0 && (
                                 <div className="flex flex-col gap-3">
                                     <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase">
                                         Pending Clinks ({pendingRequests.length})
                                     </p>
+                                    <p className="text-white/30 text-xs -mt-1">People who want to connect — accept to add them as friends</p>
                                     {pendingRequests.map((req) => (
                                         <div key={req.entityKey} className="bg-white/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
@@ -658,17 +733,39 @@ function FriendsPageFull() {
                                                 <button
                                                     onClick={() => handleAccept(req)}
                                                     disabled={acceptingKey === req.entityKey}
-                                                    className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 flex items-center justify-center hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                                    className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 flex items-center justify-center hover:bg-green-500/30 transition-colors disabled:opacity-50 cursor-pointer"
                                                 >
                                                     {acceptingKey === req.entityKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                                                 </button>
                                                 <button
                                                     onClick={() => setPendingRequests(p => p.filter(r => r.entityKey !== req.entityKey))}
-                                                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white/40 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white/40 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
                                                 >
                                                     <X className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* ── Outgoing Clinks (waiting for acceptance) ── */}
+                            {outgoingClinks.length > 0 && (
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase">
+                                        Outgoing Clinks ({outgoingClinks.length})
+                                    </p>
+                                    <p className="text-white/30 text-xs -mt-1">Waiting for them to accept — they&apos;ll appear in Friends once they do</p>
+                                    {outgoingClinks.map((oc) => (
+                                        <div key={oc.receiverAddress} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
+                                                <PatternGraphic seed={oc.receiverAddress} variant="beige" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-white font-bold text-sm truncate">{oc.receiverDisplay}</p>
+                                                <p className="text-white/40 text-xs">Clink sent from <span className="text-white/60">{oc.eventTitle}</span></p>
+                                            </div>
+                                            <span className="text-xs text-white/40 shrink-0">Pending</span>
                                         </div>
                                     ))}
                                 </div>
@@ -792,7 +889,7 @@ function FriendsPageFull() {
                     >
                         <button
                             onClick={() => { setShowQR(true); setQrTab('my-code'); setScanStatus('idle'); setScanError(null); }}
-                            className="w-14 h-14 rounded-full bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                            className="w-14 h-14 rounded-full bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer"
                         >
                             <QrCode className="w-6 h-6" />
                         </button>
@@ -820,13 +917,13 @@ function FriendsPageFull() {
                                 <div className="bg-white/5 rounded-full p-1 flex">
                                     <button
                                         onClick={() => { setQrTab('my-code'); setScanStatus('idle'); setScanError(null); }}
-                                        className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${qrTab === 'my-code' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                                        className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer ${qrTab === 'my-code' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
                                     >
                                         My Code
                                     </button>
                                     <button
                                         onClick={() => setQrTab('scan')}
-                                        className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 ${qrTab === 'scan' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
+                                        className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer ${qrTab === 'scan' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
                                     >
                                         <ScanLine className="w-3 h-3" />
                                         Scan
@@ -902,7 +999,7 @@ function LoadingScreen() {
     return (
         <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
             <Header />
-            <div className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10 animate-pulse">
+            <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10 animate-pulse">
                 <div className="flex items-center justify-between mb-8">
                     <div className="h-10 w-40 bg-white/10 rounded-lg" />
                     <div className="h-8 w-24 bg-white/10 rounded-full" />
@@ -938,7 +1035,7 @@ function ConnectScreen({ onLogin }: { onLogin: () => void }) {
     return (
         <div className="min-h-screen bg-black flex flex-col">
             <Header />
-            <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-lg w-full text-center">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-7xl w-full text-center">
                 <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
                     <Users className="w-10 h-10 text-white/40" />
                 </div>

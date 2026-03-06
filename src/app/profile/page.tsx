@@ -1,18 +1,30 @@
 "use client";
 
 import { useAuth } from "@/components/providers";
+import { useWallets } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Calendar, TrendingUp, Loader2 } from "lucide-react";
+import { User, Calendar, TrendingUp, Loader2, Pencil, Check, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
 import { PatternGraphic } from "@/components/ui/pattern-graphic";
 import { publicClient } from "@/lib/arkiv";
+import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { eq } from "@arkiv-network/sdk/query";
+import { ExpirationTime, jsonToPayload } from "@arkiv-network/sdk/utils";
+import { mendoza } from "@arkiv-network/sdk/chains";
+
+const hasPrivy =
+  typeof process.env.NEXT_PUBLIC_PRIVY_APP_ID === "string" &&
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID !== "placeholder" &&
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID.length >= 10;
 
 interface ProfileData {
+  entityKey: string;
+  displayName: string;
   totalRsvps: number;
   totalCheckins: number;
   showUpRate: number; // 0–100
@@ -29,8 +41,14 @@ function scoreColor(rate: number, isNewcomer: boolean) {
 
 export default function ProfilePage() {
   const { ready, authenticated, login, user } = useAuth();
+  const { wallets } = useWallets();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [saveNameLoading, setSaveNameLoading] = useState(false);
+  const [saveNameError, setSaveNameError] = useState<string | null>(null);
+  const [addressCopied, setAddressCopied] = useState(false);
 
   const walletAddress =
     user?.wallet?.address ??
@@ -71,6 +89,8 @@ export default function ProfilePage() {
           const showUpRate = rawRate <= 1 ? Math.round(rawRate * 100) : Math.round(rawRate);
 
           setProfile({
+            entityKey: entity.key,
+            displayName: (pd.displayName as string) || `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
             totalRsvps: (pd.totalRsvps as number) || 0,
             totalCheckins: (pd.totalCheckins as number) || 0,
             showUpRate,
@@ -93,10 +113,10 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-black overflow-x-hidden flex flex-col relative">
         <Header />
-        <div className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10 animate-pulse">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10 animate-pulse">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-white text-2xl font-bold flex items-center gap-2">
-              Identity <span className="text-secondary">✦</span>
+              Profile <span className="text-secondary">✦</span>
             </h1>
           </div>
           <div className="bg-[#141414] rounded-[2rem] w-full flex flex-col border border-white/5 shadow-2xl overflow-hidden relative min-h-[500px]">
@@ -128,7 +148,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-black flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-lg w-full text-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-7xl w-full text-center">
           <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
             <User className="w-10 h-10 text-white/40" />
           </div>
@@ -160,11 +180,11 @@ export default function ProfilePage() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 w-full max-w-md mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10"
+        className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12 flex flex-col relative z-10"
       >
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-white text-2xl font-bold flex items-center gap-2">
-            Identity <span className="text-secondary">✦</span>
+            Profile <span className="text-secondary">✦</span>
           </h1>
         </div>
 
@@ -179,14 +199,129 @@ export default function ProfilePage() {
                 className="scale-150 transform origin-center"
               />
             </div>
-            <h2 className="font-malinton text-4xl font-bold text-white leading-tight mb-2 text-center break-all">
-              {displayName}
-            </h2>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 w-full max-w-[280px]">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <p className="text-white/60 text-xs font-mono truncate w-full">
+            <div className="w-full max-w-[320px] flex flex-col items-center gap-2">
+              {isEditingName && hasPrivy && profile ? (
+                <div className="flex flex-col gap-2 w-full">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value.slice(0, 32))}
+                    placeholder="Your display name"
+                    className="text-center font-malinton text-xl bg-white/5 border-white/20 text-white"
+                    maxLength={32}
+                    autoFocus
+                  />
+                  {saveNameError && <p className="text-xs text-red-400 text-center">{saveNameError}</p>}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-white/20 text-white"
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setSaveNameError(null);
+                      }}
+                      disabled={saveNameLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1 bg-white text-black"
+                      onClick={async () => {
+                        const name = editName.trim() || `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                        if (!wallets[0] || !profile) return;
+                        setSaveNameLoading(true);
+                        setSaveNameError(null);
+                        try {
+                          const provider = await wallets[0].getEthereumProvider();
+                          await wallets[0].switchChain(mendoza.id);
+                          const wc = createArkivWalletClient(provider, wallets[0].address as `0x${string}`);
+                          const profileQ = publicClient.buildQuery();
+                          const profileResult = await profileQ
+                            .where(eq("type", "profile"))
+                            .where(eq("address", walletAddress))
+                            .withPayload(true)
+                            .withAttributes(true)
+                            .limit(1)
+                            .fetch();
+                          if (profileResult.entities.length === 0) throw new Error("Profile not found");
+                          const existingProfile = profileResult.entities[0];
+                          const existingPd = existingProfile.toJson() as Record<string, unknown>;
+                          await wc.updateEntity({
+                            entityKey: existingProfile.key,
+                            payload: jsonToPayload({ ...existingPd, displayName: name }),
+                            contentType: "application/json",
+                            attributes: existingProfile.attributes || [],
+                            expiresIn: ExpirationTime.fromDays(365),
+                          });
+                          setProfile((p) => p ? { ...p, displayName: name } : null);
+                          setIsEditingName(false);
+                        } catch (err) {
+                          setSaveNameError(err instanceof Error ? err.message : "Failed to save");
+                        } finally {
+                          setSaveNameLoading(false);
+                        }
+                      }}
+                      disabled={saveNameLoading}
+                    >
+                      {saveNameLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="font-malinton text-4xl font-bold text-white leading-tight text-center break-all">
+                    {profile?.displayName ?? displayName}
+                  </h2>
+                  {hasPrivy && profile && (
+                    <button
+                      onClick={() => {
+                        setEditName(profile.displayName);
+                        setIsEditingName(true);
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                      aria-label="Edit display name"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 w-full max-w-[400px]">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-0.5" />
+              <p className="text-white/80 text-xs font-mono break-all flex-1 select-all">
                 {walletAddress}
               </p>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(walletAddress);
+                      setAddressCopied(true);
+                      setTimeout(() => setAddressCopied(false), 2000);
+                    } catch {
+                      // fallback for older browsers
+                    }
+                  }}
+                  className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                  aria-label="Copy address"
+                  title="Copy address"
+                >
+                  {addressCopied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                </button>
+                <a
+                  href={`https://explorer.mendoza.hoodi.arkiv.network/address/${walletAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                  aria-label="View on Arkiv Explorer"
+                  title="View on Arkiv Explorer"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
 
@@ -200,11 +335,11 @@ export default function ProfilePage() {
           {/* Core Stats Area */}
           <div className="px-8 pb-8 flex flex-col gap-6">
             {/* Clink Score */}
-            <div className="bg-white/5 border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
                 <TrendingUp className="w-16 h-16 text-primary" />
               </div>
-              <p className="text-white/40 text-xs uppercase tracking-widest font-bold mb-2">
+              <p className="text-white/60 text-xs uppercase tracking-widest font-bold mb-2">
                 Clink Score
               </p>
 
@@ -240,13 +375,27 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <p className="mt-4 text-xs text-white/50 font-medium max-w-[80%]">
-                {profile === null && !profileLoading
-                  ? "RSVP to your first event to start building your score."
-                  : profile?.isNewcomer
-                    ? `${profile.totalRsvps}/3 RSVPs to activate your score.`
-                    : "Based on your show-up rate across all events."}
-              </p>
+              <div className="mt-4 space-y-3">
+                <p className="text-sm text-white/80 font-medium">
+                  Your Clink Score is your <strong className="text-white">show-up rate</strong> — the percentage of events you RSVP to and actually attend. Organizers use it to gauge reliability; a higher score builds trust and unlocks better opportunities.
+                </p>
+                <div className="rounded-xl bg-black/30 border border-white/5 p-4">
+                  <p className="text-xs font-bold text-white/90 uppercase tracking-wider mb-2">How to increase your score</p>
+                  <ul className="text-xs text-white/70 space-y-1.5">
+                    <li>• <strong>Show up</strong> — Check in at events you RSVP to. Each check-in improves your rate.</li>
+                    <li>• <strong>RSVP thoughtfully</strong> — Only RSVP when you plan to attend. No-shows lower your score.</li>
+                    <li>• <strong>Build a streak</strong> — Consecutive check-ins boost your reputation.</li>
+                    <li>• <strong>Stay consistent</strong> — Aim for 80%+ to earn a &quot;Reliable&quot; badge.</li>
+                  </ul>
+                </div>
+                <p className="text-xs text-white/50 font-medium">
+                  {profile === null && !profileLoading
+                    ? "RSVP to your first event to start building your score."
+                    : profile?.isNewcomer
+                      ? `${profile.totalRsvps}/3 RSVPs to activate your score.`
+                      : "Based on your show-up rate across all events."}
+                </p>
+              </div>
             </div>
 
             {/* Stats Grid */}

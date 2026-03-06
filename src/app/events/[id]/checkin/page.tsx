@@ -1,13 +1,16 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Copy, Check, Loader2 } from "lucide-react";
+import { Copy, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
+
+const QRCode = dynamic(() => import("react-qr-code").then((m) => m.default), { ssr: false });
 import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
 import { publicClient } from "@/lib/arkiv";
@@ -34,6 +37,7 @@ interface EventInfo {
   title: string;
   eventTimestamp: number;
   community: string;
+  organizerAddress: string;
 }
 
 export default function CheckinPage() {
@@ -49,12 +53,13 @@ function CheckinPageNoWallet() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="mx-auto max-w-2xl px-4 pt-24 pb-16">
+      <div className="mx-auto max-w-7xl px-4 pt-24 pb-16">
         <Link
           href={`/events/${entityKey}`}
-          className="mb-8 inline-block text-sm text-muted-foreground hover:text-foreground"
+          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
         >
-          ← Back to event
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          <span>Back to event</span>
         </Link>
         <div className="rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center">
           <p className="text-muted-foreground mb-2">Check-in code (display only)</p>
@@ -78,7 +83,12 @@ function CheckinPageFull() {
   const [publishStatus, setPublishStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [publishError, setPublishError] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
   const [attendeeCode, setAttendeeCode] = useState("");
+  useEffect(() => {
+    const c = searchParams.get("c");
+    if (c) setAttendeeCode(c.toUpperCase().slice(0, 6));
+  }, [searchParams]);
   const [checkinStatus, setCheckinStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [checkinError, setCheckinError] = useState<string | null>(null);
 
@@ -100,6 +110,7 @@ function CheckinPageFull() {
           title: (payload?.title as string) || "Untitled Event",
           eventTimestamp: (attrs.find((a) => a.key === "event_timestamp")?.value as number) || 0,
           community: (attrs.find((a) => a.key === "community")?.value as string) || "general",
+          organizerAddress: (payload?.organizerAddress as string) || "",
         });
       } catch {
         // non-critical — attendance proof will use fallback values
@@ -125,11 +136,47 @@ function CheckinPageFull() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isOrganizer =
+    eventInfo?.organizerAddress &&
+    walletAddress &&
+    eventInfo.organizerAddress.toLowerCase() === walletAddress.toLowerCase();
+
+  const now = Math.floor(Date.now() / 1000);
+  const CHECKIN_OPENS_BEFORE = 15 * 60; // 15 min before event
+  const CHECKIN_CLOSES_AFTER = 60 * 60; // 1 hour after event start
+  const canPublish =
+    eventInfo &&
+    now >= eventInfo.eventTimestamp - CHECKIN_OPENS_BEFORE &&
+    now <= eventInfo.eventTimestamp + CHECKIN_CLOSES_AFTER;
+  const publishTooEarly = eventInfo && now < eventInfo.eventTimestamp - CHECKIN_OPENS_BEFORE;
+  const publishTooLate = eventInfo && now > eventInfo.eventTimestamp + CHECKIN_CLOSES_AFTER;
+
+  // Default to attendee mode when not organizer
+  useEffect(() => {
+    if (eventInfo && !isOrganizer && mode === "organizer") {
+      setMode("attendee");
+    }
+  }, [eventInfo, isOrganizer, mode]);
+
   // Organizer: publish check-in code to Arkiv
   const handlePublishCode = async () => {
     if (!authenticated) { login(); return; }
     const wallet = wallets[0];
     if (!wallet) { setPublishError("No wallet connected."); return; }
+    if (!isOrganizer) {
+      setPublishError("Only the event organizer can publish the check-in code.");
+      setPublishStatus("error");
+      return;
+    }
+    if (!canPublish) {
+      setPublishError(
+        publishTooEarly
+          ? "Check-in opens 15 minutes before the event."
+          : "Check-in window has closed (1 hour after event start)."
+      );
+      setPublishStatus("error");
+      return;
+    }
 
     setPublishStatus("loading");
     setPublishError(null);
@@ -151,7 +198,10 @@ function CheckinPageFull() {
           { key: "event_key", value: entityKey },
           { key: "code", value: code },
         ],
-        expiresIn: ExpirationTime.fromHours(2),
+        expiresIn: Math.max(
+          3600,
+          eventInfo.eventTimestamp + CHECKIN_CLOSES_AFTER - now
+        ),
       });
 
       setPublishStatus("done");
@@ -209,9 +259,26 @@ function CheckinPageFull() {
         const rsvpPayload = rsvpEntity.toJson() as Record<string, unknown>;
         const rsvpAttrs = rsvpEntity.attributes || [];
 
+        // Refresh attendeeName from profile if user has a custom name
+        const updatedPayload: Record<string, unknown> = { ...rsvpPayload, checkedIn: true, checkedInTimestamp: now };
+        const profileQForUpdate = publicClient.buildQuery();
+        const profilesForUpdate = await profileQForUpdate
+          .where(eq("type", "profile"))
+          .where(eq("address", walletAddress))
+          .withPayload(true)
+          .limit(1)
+          .fetch();
+        if (profilesForUpdate.entities.length > 0) {
+          const pd = profilesForUpdate.entities[0].toJson() as Record<string, unknown>;
+          const profileName = pd.displayName as string | undefined;
+          if (profileName && profileName.trim()) {
+            updatedPayload.attendeeName = profileName.trim();
+          }
+        }
+
         await wc.updateEntity({
           entityKey: rsvpEntity.key,
-          payload: jsonToPayload({ ...rsvpPayload, checkedIn: true, checkedInTimestamp: now }),
+          payload: jsonToPayload(updatedPayload),
           contentType: "application/json",
           attributes: rsvpAttrs.map((a) =>
             a.key === "checked_in" ? { key: "checked_in", value: "1" } : a
@@ -220,10 +287,27 @@ function CheckinPageFull() {
         });
       } else {
         // Walk-in: create RSVP entity with checked_in: 1 directly
+        // Prefer profile displayName if user has a profile with a custom name
+        let attendeeDisplayName = displayName;
+        const profileQForName = publicClient.buildQuery();
+        const profilesForName = await profileQForName
+          .where(eq("type", "profile"))
+          .where(eq("address", walletAddress))
+          .withPayload(true)
+          .limit(1)
+          .fetch();
+        if (profilesForName.entities.length > 0) {
+          const pd = profilesForName.entities[0].toJson() as Record<string, unknown>;
+          const profileName = pd.displayName as string | undefined;
+          if (profileName && profileName.trim()) {
+            attendeeDisplayName = profileName.trim();
+          }
+        }
+
         await wc.createEntity({
           payload: jsonToPayload({
             attendeeAddress: walletAddress,
-            attendeeName: displayName,
+            attendeeName: attendeeDisplayName,
             eventEntityKey: entityKey,
             rsvpTimestamp: now,
             checkedIn: true,
@@ -338,42 +422,71 @@ function CheckinPageFull() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-2xl px-4 pt-24 pb-16"
+        className="mx-auto max-w-7xl px-4 pt-24 pb-16"
       >
         <Link
           href={`/events/${entityKey}`}
-          className="mb-8 inline-block text-sm text-muted-foreground hover:text-foreground"
+          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
         >
-          ← Back to event
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          <span>Back to event</span>
         </Link>
 
-        <div className="mb-8 flex gap-2">
-          <Button
-            variant={mode === "organizer" ? "default" : "outline"}
-            onClick={() => setMode("organizer")}
-          >
-            Organizer
-          </Button>
-          <Button
-            variant={mode === "attendee" ? "default" : "outline"}
-            onClick={() => setMode("attendee")}
-          >
-            Attendee
-          </Button>
-        </div>
+        {isOrganizer && (
+          <div className="mb-8 flex gap-2">
+            <Button
+              variant={mode === "organizer" ? "default" : "outline"}
+              onClick={() => setMode("organizer")}
+            >
+              Organizer
+            </Button>
+            <Button
+              variant={mode === "attendee" ? "default" : "outline"}
+              onClick={() => setMode("attendee")}
+            >
+              Attendee
+            </Button>
+          </div>
+        )}
 
-        {mode === "organizer" ? (
+        {mode === "organizer" && isOrganizer ? (
           <div className="rounded-2xl border border-white/10 bg-[#141414] p-8 space-y-6">
             <div>
               <h1 className="font-malinton text-2xl font-bold mb-1">Check-in code</h1>
               <p className="text-muted-foreground text-sm">
-                Publish this code to Arkiv, then share it with attendees.
+                Publish this code to Arkiv, then share the QR or code with attendees. Check-in opens 15 min before the event and closes 1 hour after start.
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-4 rounded-xl bg-muted/30 p-8">
-              <QrCode className="h-16 w-16 text-muted-foreground" />
-              <span className="font-mono text-4xl font-bold tracking-widest">{code}</span>
+            {publishTooEarly && (
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 text-amber-200 text-sm">
+                Check-in opens 15 minutes before the event. Come back closer to start time.
+              </div>
+            )}
+            {publishTooLate && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-red-200 text-sm">
+                Check-in window has closed (1 hour after event start).
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 rounded-xl bg-white/5 p-8">
+              <div className="bg-white p-4 rounded-xl shrink-0">
+                <QRCode
+                  value={
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/events/${entityKey}/checkin?c=${code}`
+                      : code
+                  }
+                  size={180}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </div>
+              <div className="flex flex-col items-center sm:items-start gap-2">
+                <span className="font-mono text-4xl font-bold tracking-widest text-white">{code}</span>
+                <p className="text-white/50 text-sm">Scan QR or enter code manually</p>
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -383,7 +496,7 @@ function CheckinPageFull() {
               <Button
                 className="flex-1 gap-2"
                 onClick={handlePublishCode}
-                disabled={publishStatus === "loading" || publishStatus === "done"}
+                disabled={publishStatus === "loading" || publishStatus === "done" || !canPublish}
               >
                 {publishStatus === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {publishStatus === "done" ? "✓ Published to Arkiv" : publishStatus === "loading" ? "Publishing..." : "Publish to Arkiv"}
@@ -396,7 +509,7 @@ function CheckinPageFull() {
 
             {publishStatus === "done" && (
               <p className="text-sm text-green-400">
-                ✓ Code is live. Attendees can now check in with this code. Valid for 2 hours.
+                ✓ Code is live. Attendees can scan the QR or enter the code. Valid until 1 hour after event start.
               </p>
             )}
 

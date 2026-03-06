@@ -12,7 +12,7 @@ import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
 import { publicClient } from "@/lib/arkiv";
 import { createArkivWalletClient } from "@/lib/arkiv-wallet";
-import { eq } from "@arkiv-network/sdk/query";
+import { eq, or } from "@arkiv-network/sdk/query";
 import { ExpirationTime, jsonToPayload } from "@arkiv-network/sdk/utils";
 import { mendoza } from "@arkiv-network/sdk/chains";
 
@@ -60,6 +60,31 @@ function ClinkButton({
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Check for existing clink on mount (so "Clink sent" persists after refresh)
+  useEffect(() => {
+    if (!myAddress || !targetAddress || myAddress.toLowerCase() === targetAddress.toLowerCase()) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const normKey = eventKey.startsWith("0x") ? eventKey : `0x${eventKey}`;
+        const existingQ = publicClient.buildQuery();
+        const existing = await existingQ
+          .where(eq("type", "clink"))
+          .where(eq("initiator", myAddress))
+          .where(eq("receiver", targetAddress))
+          .where(or([eq("event_key", eventKey), eq("event_key", normKey)]))
+          .limit(1)
+          .fetch();
+        if (!cancelled && existing.entities.length > 0) {
+          setStatus("sent");
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [myAddress, targetAddress, eventKey]);
+
   if (myAddress.toLowerCase() === targetAddress.toLowerCase()) return null;
 
   const handleClink = async () => {
@@ -76,13 +101,14 @@ function ClinkButton({
       const wc = createArkivWalletClient(provider, wallet.address as `0x${string}`);
       const now = Math.floor(Date.now() / 1000);
 
-      // Check for existing clink
+      // Check for existing clink (try both key formats for compatibility)
+      const normKey = eventKey.startsWith("0x") ? eventKey : `0x${eventKey}`;
       const existingQ = publicClient.buildQuery();
       const existing = await existingQ
         .where(eq("type", "clink"))
         .where(eq("initiator", myAddress))
         .where(eq("receiver", targetAddress))
-        .where(eq("event_key", eventKey))
+        .where(or([eq("event_key", eventKey), eq("event_key", normKey)]))
         .limit(1)
         .fetch();
 
@@ -197,7 +223,7 @@ export default function AttendeesPage() {
           rsvpResult.entities.map(async (rsvp) => {
             const rsvpPayload = rsvp.toJson() as Record<string, unknown>;
             const address = (rsvpPayload.attendeeAddress as string) || "";
-            const name = (rsvpPayload.attendeeName as string) || `${address.slice(0, 6)}...${address.slice(-4)}`;
+            let name = (rsvpPayload.attendeeName as string) || `${address.slice(0, 6)}...${address.slice(-4)}`;
             const checkinTs = (rsvpPayload.checkedInTimestamp as number) || 0;
 
             // Fetch profile for score
@@ -224,6 +250,11 @@ export default function AttendeesPage() {
                   isNewcomer = newcomerAttr ? Number(newcomerAttr.value) === 1 : true;
                   showUpRate = isNewcomer ? null : Math.round(((pd.showUpRate as number) || 0) * 100);
                   streak = (pd.currentStreak as number) || 0;
+                  // Prefer profile displayName when available (e.g. custom name or seed data)
+                  const profileDisplayName = pd.displayName as string | undefined;
+                  if (profileDisplayName && profileDisplayName.trim()) {
+                    name = profileDisplayName.trim();
+                  }
                 }
               } catch {
                 // ignore — show newcomer badge
@@ -260,13 +291,14 @@ export default function AttendeesPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-2xl px-4 pt-24 pb-16"
+        className="mx-auto max-w-7xl px-4 pt-24 pb-16"
       >
         <Link
           href={`/events/${entityKey}`}
-          className="mb-8 inline-block text-sm text-muted-foreground hover:text-foreground"
+          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
         >
-          ← Back to event
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          <span>Back to event</span>
         </Link>
 
         <div className="rounded-2xl border border-white/10 bg-[#141414] overflow-hidden">

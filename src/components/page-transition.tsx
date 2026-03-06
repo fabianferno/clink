@@ -1,13 +1,26 @@
 "use client";
 
+import { Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+
+/**
+ * Minimal fallback shown during client-side navigation while the new page loads.
+ * Prevents blank screen when Next.js streams the new RSC payload.
+ */
+function PageTransitionFallback() {
+    return (
+        <div className="flex-1 w-full min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+        </div>
+    );
+}
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     return (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync" initial={false}>
             <motion.div
                 key={pathname}
                 initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
@@ -16,7 +29,9 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="flex-1 w-full"
             >
-                {children}
+                <Suspense fallback={<PageTransitionFallback />}>
+                    {children}
+                </Suspense>
             </motion.div>
         </AnimatePresence>
     );

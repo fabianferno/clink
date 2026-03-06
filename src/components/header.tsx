@@ -69,7 +69,7 @@ export function Header() {
             alt="Clink"
             width={60}
             height={60}
-            className="rounded-lg"
+            className="rounded-lg md:-ml-8 md:-mr-2"
           />
           <span className="font-malinton text-2xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
             Clink
@@ -92,6 +92,12 @@ export function Header() {
           </Link>
           {authenticated && (
             <>
+              <Link
+                href="/events/my-events"
+                className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
+              >
+                My Events
+              </Link>
               <Link
                 href="/friends"
                 className="text-sm font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"

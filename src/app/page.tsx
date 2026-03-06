@@ -42,7 +42,7 @@ export default function Home() {
 
         {/* Video with logo clip-mask - top right, ~60% of screen */}
         <div
-          className="absolute filter hue-rotate-320 -top-250 right-0 w-[60vw] h-[60vh] min-h-[2800px] z-0"
+          className="absolute filter hue-rotate-320 -top-325 md:-top-250 right-0 w-[90vw] h-[80vh] min-h-[3000px] md:w-[60vw] md:h-[60vh] md:min-h-[2800px] z-0"
           style={{
             maskImage: "url('/logo.svg')",
             maskSize: "contain",
@@ -58,6 +58,8 @@ export default function Home() {
             autoPlay
             muted
             loop
+            width={3000}
+            height={3000}
             playsInline
             className="w-full h-full object-cover"
           >
@@ -70,7 +72,7 @@ export default function Home() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="relative mx-auto z-10 mt-auto px-4 pb-16 pt-8 sm:px-6 lg:px-8 min-w-7xl"
+          className="relative mx-auto z-10 mt-auto px-4 pb-16 pt-[340px] md:pt-8 sm:px-6 lg:px-8 w-full max-w-7xl"
         >
           <motion.h1
             variants={itemVariants}

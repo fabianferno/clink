@@ -53,13 +53,39 @@ const differentiators = [
   },
 ];
 
-// Cards scattered around the center. depth = parallax intensity
+// Cards scattered around the center. depth = parallax intensity (desktop only)
 const cardLayout = [
   { top: "8%", left: "-5%", width: "min(440px,85vw)", rotate: -3, z: 1, depth: 1.2 },
   { top: "12%", right: "-10%", left: "auto", width: "min(420px,80vw)", rotate: 2, z: 2, depth: 0.8 },
   { top: "58%", left: "-10%", width: "min(440px,82vw)", rotate: 1.5, z: 3, depth: 1.4 },
   { top: "62%", right: "-8%", left: "auto", width: "min(400px,78vw)", rotate: -2.5, z: 0, depth: 1 },
 ];
+
+function MobileCard({ item }: { item: (typeof differentiators)[0] }) {
+  return (
+    <div className="relative flex flex-col gap-4 rounded-2xl border border-white/10 bg-card/80 p-5 backdrop-blur-xl shadow-xl">
+      <div className="absolute top-5 right-5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+        <item.icon className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0 pr-12">
+        <h3 className="font-malinton mb-1.5 text-lg font-semibold text-foreground">
+          {item.title}
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">{item.description}</p>
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs text-primary">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Clink: {item.clink}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+            <XCircle className="h-3.5 w-3.5" />
+            Others: {item.others}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ParallaxCard({
   item,
@@ -114,8 +140,8 @@ function ParallaxCard({
         y,
         rotate: layout.rotate,
       }}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 40, }}
+      whileInView={{ opacity: 1, y: 0, }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ delay: index * 0.08, duration: 0.5 }}
       className="relative flex flex-col gap-4 rounded-2xl border border-white/10 bg-card/80 p-6 backdrop-blur-xl shadow-xl"
@@ -190,10 +216,48 @@ export function WhyClink() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
       </div>
 
-      {/* Single container: header centered, cards scattered around it */}
+      {/* Mobile: stacked cards */}
+      <div className="md:hidden w-full max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-10 text-center px-2"
+        >
+          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-primary">
+            Why Clink
+          </p>
+          <h2 className="font-malinton mb-6 text-3xl font-bold text-foreground">
+            Not another event platform.
+            <br />
+            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              A new paradigm.
+            </span>
+          </h2>
+          <p className="mx-auto max-w-2xl text-base text-muted-foreground">
+            Luma, Eventbrite, and Meetup are great — but they own your data. Clink is
+            built on Arkiv so you own your events, your community, and your reputation.
+          </p>
+        </motion.div>
+        <div className="flex flex-col gap-6">
+          {differentiators.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+            >
+              <MobileCard item={item} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop: parallax scattered cards */}
       <div
         ref={cardsRef}
-        className="relative min-h-[800px] w-full max-w-7xl mx-auto flex items-center justify-center"
+        className="hidden md:flex relative min-h-[800px] w-full max-w-7xl mx-auto items-center justify-center"
         style={{ perspective: "1200px" }}
       >
         {/* Header - centered in the middle */}

@@ -39,7 +39,7 @@ export function HowItWorks() {
         <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-secondary/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

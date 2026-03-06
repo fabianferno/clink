@@ -51,12 +51,31 @@ export function EventsFeed() {
           .fetch();
       }
 
+      // Query actual RSVP counts (event payload.currentRsvps is never updated)
+      const rsvpQ = publicClient.buildQuery();
+      const rsvpResult = await rsvpQ
+        .where(eq("type", "rsvp"))
+        .withAttributes(true)
+        .limit(5000)
+        .fetch();
+      const rsvpCountByEvent: Record<string, number> = {};
+      const normalizeKey = (k: string) => (k.startsWith("0x") ? k : `0x${k}`);
+      for (const rsvpEntity of rsvpResult.entities) {
+        const eventKey = rsvpEntity.attributes?.find((a) => a.key === "event_key")?.value as string | undefined;
+        if (eventKey) {
+          const key = normalizeKey(eventKey);
+          rsvpCountByEvent[key] = (rsvpCountByEvent[key] ?? 0) + 1;
+        }
+      }
+
       const eventList: EventData[] = result.entities
         .map((entity) => {
           const payload = entity.payload ? entity.toJson() : {};
           const attrs = entity.attributes || [];
           const rawTs = attrs.find((a) => a.key === "event_timestamp")?.value;
           const eventTimestamp = typeof rawTs === "number" ? rawTs : typeof rawTs === "string" ? parseInt(rawTs, 10) : 0;
+          const entityKeyNorm = normalizeKey(entity.key);
+          const currentRsvps = rsvpCountByEvent[entityKeyNorm] ?? 0;
           return {
             entityKey: entity.key,
             title: (payload?.title as string) || "Untitled Event",
@@ -65,7 +84,7 @@ export function EventsFeed() {
             imageUrl: payload?.imageUrl as string | undefined,
             organizerName: (payload?.organizerName as string) || "Anonymous",
             capacity: (payload?.capacity as number) || 0,
-            currentRsvps: (payload?.currentRsvps as number) || 0,
+            currentRsvps,
             eventTimestamp: eventTimestamp || 0,
             community: attrs.find((a) => a.key === "community")?.value as string | undefined,
           };

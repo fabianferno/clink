@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -35,7 +35,7 @@ function CreateEventPageFallback() {
     return (
       <div className="min-h-screen flex flex-col pt-32 px-4 items-center">
         <Header />
-        <Card className="w-full max-w-2xl bg-[#141414] border-white/10">
+        <Card className="w-full max-w-7xl bg-[#141414] border-white/10">
           <CardHeader>
             <div className="h-8 w-1/2 bg-white/10 rounded animate-pulse" />
             <div className="h-4 w-3/4 bg-white/10 rounded animate-pulse mt-2" />
@@ -50,7 +50,7 @@ function CreateEventPageFallback() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="mx-auto max-w-2xl px-4 pt-32">
+      <div className="mx-auto max-w-7xl px-4 pt-32">
         <Card>
           <CardHeader>
             <h1 className="font-malinton text-2xl font-bold">Connect to create event</h1>
@@ -130,6 +130,7 @@ function CreateEventPageWithPrivy() {
         contentType: "application/json",
         attributes: [
           { key: "type", value: "event" },
+          { key: "organizer", value: organizerAddress.toLowerCase() },
           { key: "community", value: form.community || "general" },
           { key: "event_timestamp", value: eventTimestamp },
           { key: "status", value: "upcoming" },
@@ -149,7 +150,7 @@ function CreateEventPageWithPrivy() {
     return (
       <div className="min-h-screen bg-black">
         <Header />
-        <div className="flex-1 w-full max-w-2xl mx-auto px-4 pt-48 pb-32 flex flex-col relative z-10 animate-pulse">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-48 pb-32 flex flex-col relative z-10 animate-pulse">
           <div className="h-4 w-24 bg-white/10 rounded mb-8" />
           <div className="h-10 w-64 bg-white/10 rounded mb-10" />
           <div className="space-y-8">
@@ -171,7 +172,7 @@ function CreateEventPageWithPrivy() {
     return (
       <div className="min-h-screen bg-black flex flex-col">
         <Header />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-lg w-full text-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 mx-auto max-w-7xl w-full text-center">
           <div className="w-24 h-24 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mb-8">
             <Calendar className="w-10 h-10 text-white/40" />
           </div>
@@ -198,14 +199,14 @@ function CreateEventPageWithPrivy() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 w-full max-w-2xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
+        className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-32 flex flex-col relative z-10"
       >
         <Link
           href="/events"
-          className="mb-8 inline-flex items-center gap-2 text-sm font-bold tracking-widest uppercase text-white/40 hover:text-white transition-colors w-fit"
+          className="mb-8 inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors w-fit"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to events
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          <span>Back to Events</span>
         </Link>
 
         <h1 className="font-malinton mb-10 text-5xl font-black text-white">HOST EVENT</h1>

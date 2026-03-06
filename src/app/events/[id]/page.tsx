@@ -6,8 +6,11 @@ import { useAuth } from "@/components/providers";
 import { useWallets } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { PatternGraphic } from "@/components/ui/pattern-graphic";
+
+const QRCode = dynamic(() => import("react-qr-code").then((m) => m.default), { ssr: false });
 import { publicClient } from "@/lib/arkiv";
 import { createArkivWalletClient } from "@/lib/arkiv-wallet";
 import { eq } from "@arkiv-network/sdk/query";
@@ -51,6 +54,32 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : "Anon";
 
+  // Check on mount if user has already RSVPed
+  useEffect(() => {
+    if (!walletAddress || !eventKey) return;
+    let cancelled = false;
+    async function checkExistingRsvp() {
+      try {
+        const existingQ = publicClient.buildQuery();
+        const existing = await existingQ
+          .where(eq("type", "rsvp"))
+          .where(eq("event_key", eventKey))
+          .where(eq("attendee", walletAddress))
+          .limit(1)
+          .fetch();
+        if (!cancelled && existing.entities.length > 0) {
+          setStatus((prev) => (prev === "success" ? "success" : "already"));
+        }
+      } catch {
+        // Silently ignore — user can still try to RSVP
+      }
+    }
+    checkExistingRsvp();
+    return () => {
+      cancelled = true;
+    };
+  }, [walletAddress, eventKey]);
+
   const handleRsvp = async () => {
     if (!authenticated) {
       login();
@@ -86,11 +115,30 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
         return;
       }
 
+      // Fetch profile for displayName and upsert
+      const profileQ = publicClient.buildQuery();
+      const profiles = await profileQ
+        .where(eq("type", "profile"))
+        .where(eq("address", walletAddress))
+        .withPayload(true)
+        .withAttributes(true)
+        .limit(1)
+        .fetch();
+
+      let attendeeDisplayName = displayName;
+      if (profiles.entities.length > 0) {
+        const pd = profiles.entities[0].toJson() as Record<string, unknown>;
+        const profileName = pd.displayName as string | undefined;
+        if (profileName && profileName.trim()) {
+          attendeeDisplayName = profileName.trim();
+        }
+      }
+
       // Create RSVP entity
       await wc.createEntity({
         payload: jsonToPayload({
           attendeeAddress: walletAddress,
-          attendeeName: displayName,
+          attendeeName: attendeeDisplayName,
           eventEntityKey: eventKey,
           rsvpTimestamp: now,
           checkedIn: false,
@@ -107,16 +155,7 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
         expiresIn: ExpirationTime.fromDays(60),
       });
 
-      // Upsert UserProfile
-      const profileQ = publicClient.buildQuery();
-      const profiles = await profileQ
-        .where(eq("type", "profile"))
-        .where(eq("address", walletAddress))
-        .withPayload(true)
-        .withAttributes(true)
-        .limit(1)
-        .fetch();
-
+      // Upsert UserProfile (reuse profiles from above)
       if (profiles.entities.length === 0) {
         // Create new profile
         await wc.createEntity({
@@ -216,12 +255,54 @@ function RsvpButton({ eventKey }: { eventKey: string }) {
 
 export default function EventDetailPage() {
   const params = useParams();
-  useAuth();
+  const { user } = useAuth();
+  const { wallets } = useWallets();
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTicket, setShowTicket] = useState(false);
+  const [checkinCode, setCheckinCode] = useState<string | null>(null);
 
   const entityKey = params.id as string;
+
+  useEffect(() => {
+    if (!showTicket || !entityKey) return;
+    let cancelled = false;
+    async function fetchCheckinCode() {
+      try {
+        const codeQ = publicClient.buildQuery();
+        const result = await codeQ
+          .where(eq("type", "checkin_code"))
+          .where(eq("event_key", entityKey))
+          .withPayload(true)
+          .limit(1)
+          .fetch();
+        if (!cancelled && result.entities.length > 0) {
+          const payload = result.entities[0].toJson() as Record<string, unknown>;
+          setCheckinCode((payload.code as string) || null);
+        } else {
+          setCheckinCode(null);
+        }
+      } catch {
+        if (!cancelled) setCheckinCode(null);
+      }
+    }
+    fetchCheckinCode();
+    return () => {
+      cancelled = true;
+    };
+  }, [showTicket, entityKey]);
+
+  const walletAddress =
+    user?.wallet?.address ??
+    (user?.linkedAccounts?.find((a: { type: string }) => a.type === "wallet") as { address: string } | undefined)
+      ?.address ??
+    wallets[0]?.address ??
+    "";
+  const isOrganizer =
+    event &&
+    event.organizerAddress &&
+    walletAddress &&
+    event.organizerAddress.toLowerCase() === walletAddress.toLowerCase();
 
   useEffect(() => {
     let cancelled = false;
@@ -289,7 +370,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-black overflow-hidden flex flex-col">
         <Header />
-        <div className="flex-1 w-full max-w-6xl mx-auto px-4 pt-28 pb-12">
+        <div className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12">
           <div className="grid md:grid-cols-[1fr_400px] gap-8 relative">
             <div className="flex flex-col gap-6 w-full animate-pulse">
               <div className="w-10 h-10 rounded-full bg-white/10" />
@@ -344,11 +425,15 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen">
         <Header />
-        <div className="mx-auto max-w-2xl px-4 pt-32 text-center">
+        <div className="mx-auto max-w-7xl px-4 pt-32 text-center">
           <h1 className="font-malinton mb-4 text-2xl font-bold">Event not found</h1>
-          <Button asChild>
-            <Link href="/events">Back to events</Link>
-          </Button>
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            <span>Back to Events</span>
+          </Link>
         </div>
       </div>
     );
@@ -374,16 +459,17 @@ export default function EventDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 w-full max-w-6xl mx-auto px-4 pt-28 pb-12"
+        className="flex-1 w-full max-w-7xl mx-auto px-4 pt-28 pb-12"
       >
         <div className="grid md:grid-cols-[1fr_400px] gap-8 relative">
           {/* Left Column: Details */}
           <div className="flex flex-col gap-6">
             <Link
               href="/events"
-              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 -ml-2 px-2 py-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <span>Back to Events</span>
             </Link>
 
             <div className="w-full aspect-[21/9] rounded-3xl overflow-hidden relative bg-[#141414] border border-white/10 shadow-2xl">
@@ -468,22 +554,36 @@ export default function EventDetailPage() {
                     </Button>
                   ))}
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium"
-                    asChild
-                  >
-                    <Link href={`/events/${entityKey}/checkin`}>Check-in</Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium"
-                    asChild
-                  >
-                    <Link href={`/events/${entityKey}/attendees`}>Attendees</Link>
-                  </Button>
-                </div>
+                {isOrganizer && (
+                  <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary/80">Organizer</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" className="rounded-full bg-primary text-black hover:bg-primary/90 font-bold" asChild>
+                        <Link href={`/events/${entityKey}/edit`}>Edit event</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-full border-white/20 text-white hover:bg-white/10" asChild>
+                        <Link href={`/events/${entityKey}/checkin`}>Check-in</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-full border-white/20 text-white hover:bg-white/10" asChild>
+                        <Link href={`/events/${entityKey}/attendees`}>Attendees</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-full border-white/20 text-white hover:bg-white/10" asChild>
+                        <Link href="/events/my-events">My Events</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {!isOrganizer && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium" asChild>
+                      <Link href={`/events/${entityKey}/checkin`}>Check-in</Link>
+                    </Button>
+                    <Button variant="outline" className="flex-1 rounded-full border-white/20 text-white hover:bg-white/10 font-medium" asChild>
+                      <Link href={`/events/${entityKey}/attendees`}>Attendees</Link>
+                    </Button>
+                  </div>
+                )}
 
                 <Button
                   onClick={() => setShowTicket(true)}
@@ -565,6 +665,43 @@ export default function EventDetailPage() {
                     <p className="text-white font-bold text-lg truncate">{event.organizerName}</p>
                   </div>
                 </div>
+
+                {checkinCode && (
+                  <div className="mb-8 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Check-in at event</p>
+                    <div className="flex items-center gap-4">
+                      <div className="bg-white p-2 rounded-lg shrink-0">
+                        <QRCode
+                          value={
+                            typeof window !== "undefined"
+                              ? `${window.location.origin}/events/${entityKey}/checkin?c=${checkinCode}`
+                              : checkinCode
+                          }
+                          size={80}
+                          level="M"
+                          bgColor="#ffffff"
+                          fgColor="#000000"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xl font-bold tracking-widest text-white mb-1">{checkinCode}</p>
+                        <Button asChild size="sm" className="mt-2 bg-primary text-black hover:bg-primary/90 font-bold">
+                          <Link href={`/events/${entityKey}/checkin?c=${checkinCode}`}>
+                            Go to Check-in
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {!checkinCode && !isPast && (
+                  <div className="mb-8">
+                    <Button asChild variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+                      <Link href={`/events/${entityKey}/checkin`}>Go to Check-in</Link>
+                    </Button>
+                    <p className="text-white/40 text-xs mt-2">Check-in code will be available when the organizer publishes it.</p>
+                  </div>
+                )}
               </div>
 
               {/* Ticket Dotted Separator */}
